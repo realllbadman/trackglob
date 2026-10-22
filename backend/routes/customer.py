@@ -101,7 +101,7 @@ def register(payload: RegisterIn, request: Request, response: Response, backgrou
     ).update({Shipment.customer_id: customer.id}, synchronize_session=False)
     db.commit()
 
-    set_session_cookie(response, customer.id)
+    set_session_cookie(response, customer.id, request)
     background.add_task(send_welcome, customer)
     return {"ok": True, "customer": customer_dict(customer)}
 
@@ -119,13 +119,13 @@ def login(payload: LoginIn, request: Request, response: Response, db: Session = 
     login_limiter.reset(ip)
     customer.last_login = utcnow()
     db.commit()
-    set_session_cookie(response, customer.id)
+    set_session_cookie(response, customer.id, request)
     return {"ok": True, "customer": customer_dict(customer)}
 
 
 @router.post("/logout")
-def logout(response: Response):
-    clear_session_cookie(response)
+def logout(request: Request, response: Response):
+    clear_session_cookie(response, request)
     return {"ok": True}
 
 

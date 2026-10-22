@@ -21,6 +21,15 @@ COOKIE_NAME = "session"
 COOKIE_MAX_AGE = 14 * 24 * 3600
 COOKIE_SECURE = PUBLIC_BASE_URL.lower().startswith("https://")
 
+
+def _secure(request: Optional[Request]) -> bool:
+    """Mark the cookie Secure when the visitor is actually on HTTPS (nginx sets X-Forwarded-Proto
+    and uvicorn --proxy-headers turns it into request.url.scheme). Local http testing keeps working."""
+    if request is None:
+        return COOKIE_SECURE
+    return request.url.scheme == "https"
+
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 _serializer = URLSafeTimedSerializer(SECRET_KEY, salt="customer-session")
 
@@ -42,7 +51,7 @@ def verify_password(password: str, hashed: str) -> bool:
 
 
 # ---------------------------------------------------------------- customer session
-def set_session_cookie(response: Response, customer_id: int) -> None:
+def set_session_cookie(response: Response, customer_id: int, request: Optional[Request] = None) -> None:
     token = _serializer.dumps({"cid": customer_id})
     response.set_cookie(
         COOKIE_NAME,
@@ -50,13 +59,13 @@ def set_session_cookie(response: Response, customer_id: int) -> None:
         max_age=COOKIE_MAX_AGE,
         httponly=True,
         samesite="lax",
-        secure=COOKIE_SECURE,
+        secure=_secure(request),
         path="/",
     )
 
 
-def clear_session_cookie(response: Response) -> None:
-    response.delete_cookie(COOKIE_NAME, path="/", samesite="lax", secure=COOKIE_SECURE, httponly=True)
+def clear_session_cookie(response: Response, request: Optional[Request] = None) -> None:
+    response.delete_cookie(COOKIE_NAME, path="/", samesite="lax", secure=_secure(request), httponly=True)
 
 
 def get_current_customer(request: Request, db: Session) -> Optional[Customer]:

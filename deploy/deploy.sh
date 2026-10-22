@@ -5,8 +5,8 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------- config
-DOMAIN="example.com"
-ALT_DOMAIN="www.example.com"
+DOMAIN="globaltransiting.com"
+ALT_DOMAIN="www.globaltransiting.com"
 PORT=8006
 SERVICE="parcel-tracking"
 APP_USER="www-data"
