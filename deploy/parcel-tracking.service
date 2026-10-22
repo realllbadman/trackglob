@@ -12,7 +12,7 @@ Environment=APP_ENV=production
 # Bound to localhost only; nginx terminates TLS and proxies to it.
 # With SQLite + 2 workers, the in-memory geocode cache/lock is per process;
 # that's fine because the geocode cache table in the DB is shared.
-ExecStart=/opt/parcel-tracking/.venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 8010 --workers 2 --proxy-headers --forwarded-allow-ips=127.0.0.1
+ExecStart=/opt/parcel-tracking/.venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 8013 --workers 2 --proxy-headers --forwarded-allow-ips=127.0.0.1
 Restart=always
 RestartSec=3
 NoNewPrivileges=true

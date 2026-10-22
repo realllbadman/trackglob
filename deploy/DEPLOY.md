@@ -36,9 +36,9 @@ sudo bash deploy/deploy.sh
 
 The script:
 
-1. checks that `backend/main.py` and `.env` exist, that the defaults have been changed, and that port 8010 is free;
+1. checks that `backend/main.py` and `.env` exist, that the defaults have been changed, and that port 8013 is free;
 2. creates `.venv` and installs the requirements;
-3. writes and enables `/etc/systemd/system/parcel-tracking.service` (Uvicorn on `127.0.0.1:8010`, 2 workers, `APP_ENV=production`);
+3. writes and enables `/etc/systemd/system/parcel-tracking.service` (Uvicorn on `127.0.0.1:8013`, 2 workers, `APP_ENV=production`);
 4. prints the nginx server block and the certbot command.
 
 ## 4. nginx + HTTPS

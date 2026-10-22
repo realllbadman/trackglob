@@ -7,7 +7,7 @@ set -euo pipefail
 # ---------------------------------------------------------------- config
 DOMAIN="globaltransiting.com"
 ALT_DOMAIN="www.globaltransiting.com"
-PORT=8010  # 8006 is used by another app on the VPS
+PORT=8013  # 8006 and 8010 are used by other apps on the VPS
 SERVICE="parcel-tracking"
 APP_USER="www-data"
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
