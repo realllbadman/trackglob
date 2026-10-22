@@ -143,7 +143,7 @@
       </div>
       <div class="disclaimer"><i data-lucide="info"></i><span>{{ business.disclaimer }}</span></div>
       <div class="copyright">
-        <span>&copy; {% if business.founded and business.founded|int < current_year %}{{ business.founded }}–{% endif %}{{ current_year }} {{ business.name }}. All rights reserved.</span>
+        <span>&copy; {{ business.founded or current_year }} {{ business.name }}. All rights reserved.</span>
         <span>Map data &copy; OpenStreetMap contributors</span>
       </div>
     </div>

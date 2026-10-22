@@ -206,7 +206,7 @@
       setText("[data-disclaimer]", cfg.disclaimer);
       setText("[data-phone]", cfg.phone || "—");
       const yr = cfg.current_year || new Date().getFullYear();
-      setText("[data-years]", cfg.founded && +cfg.founded < yr ? cfg.founded + "–" + yr : String(yr));
+      setText("[data-years]", String(cfg.founded || yr));
       setText("[data-founded-in]", cfg.founded ? " in " + cfg.founded : "");
       setText("[data-email]", cfg.email || "—");
       document.title = "About us — " + cfg.name;
