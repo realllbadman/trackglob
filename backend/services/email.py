@@ -90,7 +90,6 @@ def _base_html(title: str, body: str) -> str:
   <tr><td style="background:#f5f8fc;padding:20px 28px;font-size:12px;color:#5c6b80;line-height:1.6">
     {"<br>".join(contact)}
     <div style="margin-top:10px">You are receiving this because a shipment lists your email for updates.</div>
-    <div style="margin-top:6px">{e(BUSINESS["disclaimer"])}</div>
   </td></tr>
 </table>
 </td></tr></table>
