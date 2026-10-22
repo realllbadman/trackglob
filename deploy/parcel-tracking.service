@@ -1,0 +1,22 @@
+[Unit]
+Description=Parcel tracking website (FastAPI / Uvicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/parcel-tracking
+EnvironmentFile=/opt/parcel-tracking/.env
+Environment=APP_ENV=production
+# Bound to localhost only; nginx terminates TLS and proxies to it.
+# With SQLite + 2 workers, the in-memory geocode cache/lock is per process;
+# that's fine because the geocode cache table in the DB is shared.
+ExecStart=/opt/parcel-tracking/.venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 8006 --workers 2 --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

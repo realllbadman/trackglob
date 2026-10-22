@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin — Parcel Tracking</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="/static/css/main.css">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js" defer></script>
+  <style>
+    body { background: var(--surface); }
+    .admin-login { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: radial-gradient(900px 420px at 0% 0%, #d6efeb, transparent 60%), var(--surface); }
+    .admin-login .card { width: 100%; max-width: 420px; padding: 36px; box-shadow: var(--shadow-lg); }
+    .admin-head { background: var(--brand-deep); color: #fff; position: sticky; top: 0; z-index: 800; }
+    .admin-head .container { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 66px; }
+    .admin-head .logo { color: #fff; }
+    .admin-head .logo .logo-text small { color: #9fb4e6; }
+    .admin-head .btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.35); }
+    .admin-head .btn-ghost:hover { background: rgba(255,255,255,.12); color: #fff; border-color: #fff; }
+    .admin-head .btn svg { color: currentColor; }
+    .admin-main { padding: 28px 0 64px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; display: flex; gap: 14px; align-items: center; }
+    .stat-card .icon-tile { margin: 0; width: 46px; height: 46px; }
+    .stat-card .num { font-family: var(--font-head); font-weight: 800; font-size: 1.6rem; line-height: 1; }
+    .stat-card .label { color: var(--muted); font-size: .82rem; }
+    .tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
+    .tabs button { background: none; border: 0; padding: 12px 16px; font-family: var(--font-head); font-weight: 700; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; white-space: nowrap; display: inline-flex; gap: 8px; align-items: center; }
+    .tabs button svg { width: 17px; height: 17px; }
+    .tabs button.active { color: var(--brand); border-bottom-color: var(--brand); }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+    .toolbar .input { max-width: 340px; }
+    .toolbar select.input { max-width: 220px; }
+    details.new-ship { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; }
+    details.new-ship > summary { list-style: none; cursor: pointer; padding: 18px 22px; display: flex; align-items: center; gap: 10px; font-family: var(--font-head); font-weight: 700; }
+    details.new-ship > summary::-webkit-details-marker { display: none; }
+    details.new-ship > summary svg { width: 20px; height: 20px; color: var(--brand); }
+    details.new-ship[open] > summary { border-bottom: 1px solid var(--border); }
+    details.new-ship .ns-body { padding: 22px; }
+    .fgroup { margin-bottom: 8px; }
+    .fgroup h4 { font-size: .82rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 10px 0 12px; }
+    .fgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0 14px; }
+    .fgrid .span-2 { grid-column: span 2; }
+    .fgrid .span-4 { grid-column: 1 / -1; }
+    .field input, .field select, .field textarea { padding: 10px 12px; font-size: .92rem; }
+    details.quick-start { background: #effaf8; border: 1px solid #cdebe7; border-radius: var(--radius); margin-bottom: 16px; }
+    details.quick-start > summary { list-style: none; cursor: pointer; padding: 14px 20px; display: flex; align-items: center; gap: 10px; font-family: var(--font-head); font-weight: 700; }
+    details.quick-start > summary::-webkit-details-marker { display: none; }
+    details.quick-start > summary svg { width: 20px; height: 20px; color: var(--brand); }
+    .qs-steps { margin: 0; padding: 0 20px 16px 44px; display: grid; gap: 8px; font-size: .92rem; color: #134e4a; }
+    .qs-steps em, .j-step em { font-style: normal; font-weight: 600; background: #fff; padding: 0 5px; border-radius: 4px; }
+    .j-step { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0 10px; }
+    .j-step:first-of-type { margin-top: 4px; }
+    .j-step .n { width: 24px; height: 24px; border-radius: 50%; background: var(--brand); color: #fff; display: grid; place-items: center; font-size: .78rem; font-weight: 800; flex: none; font-family: var(--font-head); }
+    .j-step strong { display: block; font-family: var(--font-head); font-size: .92rem; }
+    .j-step span.h { display: block; font-size: .8rem; color: var(--muted); }
+    .created-box { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: var(--radius-sm); padding: 14px 18px; margin-bottom: 20px; }
+    .created-box .mono { font-size: 1.2rem; font-weight: 800; }
+    .dtable td .btn { white-space: nowrap; }
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .panel { border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; background: #fff; }
+    .panel h4 { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 1rem; }
+    .panel h4 svg { width: 18px; height: 18px; color: var(--brand); }
+    .kv { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 16px; font-size: .9rem; }
+    .kv .k { color: var(--muted); font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+    .kv .v { font-weight: 600; overflow-wrap: anywhere; }
+    .admin-tl .tl-item { padding-right: 46px; }
+    .mini-map { height: 340px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+    .wp-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .wp-row .input { flex: 1; }
+    .state-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: .78rem; font-weight: 700; font-family: var(--font-head); background: #eef2f7; color: #475569; text-transform: uppercase; letter-spacing: .04em; }
+    .state-pill.moving { background: #dbeafe; color: var(--brand-dark); }
+    .state-pill.paused { background: #fef3c7; color: #b45309; }
+    .state-pill.arrived { background: #dcfce7; color: #15803d; }
+    .j-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .temp-pw { font-size: 1.4rem; font-weight: 800; background: var(--surface); padding: 12px 16px; border-radius: var(--radius-sm); display: inline-block; letter-spacing: .04em; }
+    .empty-row td { text-align: center; color: var(--muted); padding: 28px; }
+    @media (max-width: 1080px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } .modal-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 760px) { .fgrid { grid-template-columns: 1fr 1fr; } .kv { grid-template-columns: 1fr 1fr; } .stat-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 460px) { .fgrid { grid-template-columns: 1fr; } .fgrid .span-2 { grid-column: auto; } .kv { grid-template-columns: 1fr; } .admin-head .logo-text small { display: none; } }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+
+    /* ---------------- guided tour */
+    .tour-root { position: fixed; inset: 0; z-index: 4000; }
+    .tour-blocker { position: absolute; inset: 0; }
+    .tour-spot { position: fixed; border-radius: 12px; pointer-events: none; box-shadow: 0 0 0 9999px rgba(6, 41, 37, .62); border: 2px solid var(--accent); transition: top .45s var(--ease), left .45s var(--ease), width .45s var(--ease), height .45s var(--ease); }
+    .tour-spot::after { content: ""; position: absolute; inset: -8px; border-radius: 16px; border: 2px solid var(--accent); animation: tourPulse 1.6s ease-out infinite; }
+    @keyframes tourPulse { 0% { opacity: .9; transform: scale(.97); } 100% { opacity: 0; transform: scale(1.06); } }
+    .tour-arrow { position: fixed; width: 40px; height: 40px; color: var(--accent); pointer-events: none; filter: drop-shadow(0 3px 6px rgba(0,0,0,.45)); transition: top .45s var(--ease), left .45s var(--ease); }
+    .tour-arrow svg { width: 40px; height: 40px; display: block; }
+    .tour-arrow.down svg { animation: tourBounceDown .9s ease-in-out infinite; }
+    .tour-arrow.up svg { transform: rotate(180deg); animation: tourBounceUp .9s ease-in-out infinite; }
+    @keyframes tourBounceDown { 50% { translate: 0 8px; } }
+    @keyframes tourBounceUp { 50% { translate: 0 -8px; } }
+    .tour-card { position: fixed; width: min(380px, calc(100vw - 24px)); background: #fff; border-radius: 14px; box-shadow: 0 24px 60px -12px rgba(0,0,0,.45); padding: 18px 18px 14px; transition: top .45s var(--ease), left .45s var(--ease); }
+    .tour-card.enter { animation: tourIn .35s var(--ease); }
+    @keyframes tourIn { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+    .tour-card .tc-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .tour-card .tc-step { font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--brand); font-family: var(--font-head); }
+    .tour-card .tc-close { background: none; border: 0; cursor: pointer; color: var(--muted); padding: 4px; display: grid; place-items: center; border-radius: 6px; }
+    .tour-card .tc-close:hover { background: var(--surface); color: var(--ink); }
+    .tour-card .tc-close svg { width: 18px; height: 18px; }
+    .tour-card h4 { margin: 0 0 6px; font-size: 1.08rem; display: flex; align-items: center; gap: 8px; }
+    .tour-card h4 .tc-ic { width: 30px; height: 30px; border-radius: 8px; background: #e3f3f1; color: var(--brand); display: grid; place-items: center; flex: none; }
+    .tour-card h4 .tc-ic svg { width: 17px; height: 17px; }
+    .tour-card .tc-text { font-size: .9rem; color: #33464a; line-height: 1.55; }
+    .tour-card .tc-text p { margin: 0 0 8px; }
+    .tour-card .tc-text ul { margin: 4px 0 8px; padding-left: 18px; }
+    .tour-card .tc-text li { margin-bottom: 4px; }
+    .tour-card .tc-text b { color: var(--ink); }
+    .tour-card .tc-tip { display: flex; gap: 8px; background: #eefbd4; color: #365314; border-radius: 8px; padding: 8px 10px; font-size: .82rem; margin-top: 4px; }
+    .tour-card .tc-tip svg { width: 15px; height: 15px; flex: none; margin-top: 2px; }
+    .tour-card .tc-bar { height: 4px; border-radius: 4px; background: var(--surface2); margin: 12px 0; overflow: hidden; }
+    .tour-card .tc-bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--brand), var(--accent)); border-radius: 4px; transition: width .4s var(--ease); }
+    .tour-card .tc-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .tour-card .tc-actions .tc-keys { font-size: .72rem; color: var(--muted); }
+    .tour-card .tc-caret { position: absolute; width: 14px; height: 14px; background: #fff; transform: rotate(45deg); }
+    .tour-card.below .tc-caret { top: -7px; }
+    .tour-card.above .tc-caret { bottom: -7px; }
+    .tour-card.center .tc-caret { display: none; }
+    .tour-typing { box-shadow: 0 0 0 3px rgba(181, 236, 59, .7) !important; }
+    @media (prefers-reduced-motion: reduce) {
+      .tour-spot, .tour-arrow, .tour-card { transition: none; }
+      .tour-spot::after, .tour-arrow svg, .tour-card.enter { animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ================================================= login -->
+  <section class="admin-login" id="login-view">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
+        <span class="logo-mark" style="width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand),var(--brand-deep));color:#fff;font-family:var(--font-head);font-weight:800" data-abbr>··</span>
+        <div><div style="font-family:var(--font-head);font-weight:800;font-size:1.2rem" data-brand>Admin</div><div class="small muted">Operations console</div></div>
+      </div>
+      <div class="form-error" id="login-err" role="alert"></div>
+      <form id="login-form">
+        <div class="field"><label for="a-user">Username</label>
+          <div class="input-icon"><i data-lucide="user-round"></i><input id="a-user" autocomplete="username" required></div></div>
+        <div class="field"><label for="a-pass">Password</label>
+          <div class="input-icon"><i data-lucide="lock"></i><input id="a-pass" type="password" autocomplete="current-password" required>
+            <button type="button" class="toggle-pw" aria-label="Show password"><i data-lucide="eye"></i></button></div></div>
+        <button class="btn btn-primary btn-block btn-lg" type="submit">Sign in</button>
+      </form>
+      <a class="btn btn-ghost btn-block" href="/" target="_blank" rel="noopener" style="margin-top:12px"><i data-lucide="globe"></i> Go to site</a>
+    </div>
+  </section>
+
+  <!-- ================================================= app -->
+  <div id="app-view" hidden>
+    <header class="admin-head">
+      <div class="container">
+        <a href="/" class="logo" target="_blank" rel="noopener">
+          <span class="logo-mark" data-abbr></span>
+          <span class="logo-text"><span data-brand></span><small>Admin console</small></span>
+        </a>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-ghost btn-sm" id="tour-btn" onclick="AdminTour.startAuto(true)" title="Show me how this page works"><i data-lucide="sparkles"></i> <span class="hide-sm">Guided tour</span></button>
+          <a class="btn btn-accent btn-sm" id="go-site" href="/" target="_blank" rel="noopener" title="Open the public website in a new tab"><i data-lucide="globe"></i> Go to site</a>
+          <button class="btn btn-ghost btn-sm" onclick="adminLogout()"><i data-lucide="log-out"></i> <span class="hide-sm">Logout</span></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-main">
+      <div class="container">
+        <div class="stat-grid" id="stats">
+          <div class="stat-card"><div class="icon-tile"><i data-lucide="package"></i></div><div><div class="num" data-stat="total">–</div><div class="label">Total shipments</div></div></div>
+          <div class="stat-card"><div class="icon-tile"><i data-lucide="truck"></i></div><div><div class="num" data-stat="in_transit">–</div><div class="label">In transit</div></div></div>
+          <div class="stat-card"><div class="icon-tile" style="background:#dcfce7;color:#15803d"><i data-lucide="package-check"></i></div><div><div class="num" data-stat="delivered">–</div><div class="label">Delivered</div></div></div>
+          <div class="stat-card"><div class="icon-tile" style="background:#eef2f7;color:#475569"><i data-lucide="clock-3"></i></div><div><div class="num" data-stat="pending">–</div><div class="label">Pending</div></div></div>
+          <div class="stat-card"><div class="icon-tile accent"><i data-lucide="calendar-plus"></i></div><div><div class="num" data-stat="this_month">–</div><div class="label">This month</div></div></div>
+        </div>
+
+        <div class="tabs" role="tablist">
+          <button class="active" data-tab="shipments" role="tab"><i data-lucide="package"></i> Shipments</button>
+          <button data-tab="customers" role="tab"><i data-lucide="users"></i> Customers</button>
+          <button data-tab="subscribers" role="tab"><i data-lucide="mail"></i> Subscribers</button>
+        </div>
+
+        <!-- ---------------------------------------- shipments tab -->
+        <section data-panel="shipments">
+          <details class="quick-start" id="quick-start" open>
+            <summary><i data-lucide="graduation-cap"></i> Quick start — how to track a shipment <span class="small muted" style="font-weight:500;font-family:var(--font-body)">click to show/hide</span></summary>
+            <ol class="qs-steps">
+              <li><b>Create</b> — open <em>New shipment</em> below, fill in sender, receiver name + email, origin and destination, press <em>Create</em>. Copy the tracking number it gives you.</li>
+              <li><b>Update</b> — press <em>Open</em> on the shipment, then <em>Add checkpoint</em>: choose a status and type a place ("City, Country"). The receiver is emailed each time.</li>
+              <li><b>Live map (optional)</b> — in <em>Live journey</em>: Step 1 build the route, Step 2 set departure + arrival, Step 3 press <em>Start</em>. The marker moves by itself; use Pause/Resume for delays and <em>Arrived</em> at the end.</li>
+              <li><b>Share</b> — send the tracking number to your customer. They track it on the homepage; the page refreshes every 30 s.</li>
+            </ol>
+          </details>
+          <details class="new-ship" id="new-ship">
+            <summary><i data-lucide="plus-circle"></i> New shipment <span class="small muted" style="font-weight:500;font-family:var(--font-body)">— click to expand</span></summary>
+            <div class="ns-body">
+              <div class="form-error" id="create-err" role="alert"></div>
+              <form id="create-form" novalidate></form>
+            </div>
+          </details>
+          <div id="created-slot"></div>
+
+          <div class="toolbar">
+            <div class="input-icon" style="flex:1;max-width:360px"><i data-lucide="search"></i><input class="input" id="q" placeholder="Search tracking #, receiver, email, destination"></div>
+            <select class="input" id="status-filter"><option value="">All statuses</option></select>
+            <button class="btn btn-ghost btn-sm" onclick="loadShipments()"><i data-lucide="refresh-cw"></i> Refresh</button>
+          </div>
+          <div class="table-wrap" style="background:#fff">
+            <table class="dtable">
+              <thead><tr><th>Tracking #</th><th>Receiver</th><th>Destination</th><th>Status</th><th>Created</th><th></th></tr></thead>
+              <tbody id="ship-rows"><tr class="empty-row"><td colspan="6">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ---------------------------------------- customers tab -->
+        <section data-panel="customers" hidden>
+          <div class="toolbar">
+            <div class="input-icon" style="flex:1;max-width:360px"><i data-lucide="search"></i><input class="input" id="cq" placeholder="Search name, email or phone"></div>
+          </div>
+          <div class="table-wrap" style="background:#fff">
+            <table class="dtable">
+              <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Last login</th><th>Shipments</th><th></th></tr></thead>
+              <tbody id="cust-rows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ---------------------------------------- subscribers tab -->
+        <section data-panel="subscribers" hidden>
+          <div class="table-wrap" style="background:#fff">
+            <table class="dtable" style="min-width:420px">
+              <thead><tr><th>Email</th><th>Subscribed</th></tr></thead>
+              <tbody id="sub-rows"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- ================================================= modals -->
+  <div class="modal-backdrop" id="ship-modal" role="dialog" aria-modal="true" aria-labelledby="sm-title">
+    <div class="modal">
+      <div class="modal-head">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><h3 id="sm-title" class="mono">—</h3><span id="sm-badge"></span></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" id="sm-tour" onclick="AdminTour.start('shipment')" title="Walk me through this screen"><i data-lucide="sparkles"></i> <span class="hide-sm">How this works</span></button>
+          <a class="btn btn-ghost btn-sm" id="sm-public" target="_blank" rel="noopener"><i data-lucide="external-link"></i> Public page</a>
+          <button class="icon-btn" onclick="closeModal('ship-modal')" aria-label="Close"><i data-lucide="x"></i></button>
+        </div>
+      </div>
+      <div class="modal-body" id="sm-body"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="cust-modal" role="dialog" aria-modal="true">
+    <div class="modal sm">
+      <div class="modal-head"><h3 id="cm-title">Customer</h3><button class="icon-btn" onclick="closeModal('cust-modal')" aria-label="Close"><i data-lucide="x"></i></button></div>
+      <div class="modal-body" id="cm-body"></div>
+    </div>
+  </div>
+
+  <div class="toast-wrap" aria-live="polite"></div>
+  <script src="/static/js/main.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="/static/js/map.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    let STATUSES = ["Pending", "Picked Up", "In Transit", "Arrived at Hub", "Departed Hub", "Out for Delivery", "Delivered", "Exception / Delayed", "Held at Customs", "On Hold / Delayed"];
+    let auth = null;
+    try { auth = sessionStorage.getItem("adminAuth"); } catch (e) { /* ignore */ }
+    let customersCache = [];
+    let miniMap = null;
+    let current = null; // shipment open in modal
+
+    // ------------------------------------------------------------ field definitions
+    const F = (name, label, opts) => Object.assign({ name, label, type: "text" }, opts || {});
+    const GROUPS = [
+      ["Sender", [F("sender_name", "Sender name", { required: true, span: 2 }), F("sender_address", "Sender address", { span: 2 })]],
+      ["Receiver", [
+        F("receiver_name", "Receiver name", { required: true }), F("receiver_email", "Receiver email", { type: "email", required: true }),
+        F("receiver_phone", "Receiver phone"), F("receiver_address", "Receiver address"),
+      ]],
+      ["Route & package", [
+        F("origin", "Origin", { placeholder: "City, Country" }), F("destination", "Destination", { placeholder: "City, Country" }),
+        F("package_type", "Package type", { type: "select", options: ["Document", "Parcel", "Freight"] }),
+        F("service_type", "Service type", { type: "select", options: ["Standard", "Express"] }),
+        F("weight", "Weight", { placeholder: "e.g. 2.5 kg" }), F("estimated_delivery", "Estimated delivery", { placeholder: "e.g. Oct 24, 2026" }),
+        F("shipment_mode", "Shipment mode", { type: "select", options: ["Air Freight", "Ocean Freight", "Ground / Road", "Express"] }),
+        F("product", "Product / description"),
+      ]],
+      ["Carrier & billing", [
+        F("carrier", "Carrier"), F("carrier_reference", "Carrier reference"),
+        F("payment_mode", "Payment mode", { type: "select", options: ["Prepaid", "Bank transfer", "Card", "Cash on delivery"] }),
+        F("total_freight", "Total freight", { placeholder: "e.g. $45.00" }),
+      ]],
+      ["Pieces & pickup", [
+        F("qty", "Quantity"), F("piece_type", "Piece type", { type: "select", options: ["Others", "Box", "Pallet", "Envelope", "Crate"] }),
+        F("length_cm", "Length (cm)"), F("width_cm", "Width (cm)"), F("height_cm", "Height (cm)"),
+        F("departure_time", "Departure time", { placeholder: "e.g. 09:30" }), F("pickup_date", "Pickup date", { type: "date" }), F("pickup_time", "Pickup time", { type: "time" }),
+      ]],
+      ["Notes", [F("comments", "Comments", { type: "textarea", span: 4 })]],
+    ];
+
+    function fieldHtml(f, prefix, value) {
+      const id = prefix + f.name;
+      const v = value == null ? "" : value;
+      const cls = f.span === 4 ? "span-4" : f.span === 2 ? "span-2" : "";
+      let control;
+      if (f.type === "select") {
+        const opts = f.options.slice();
+        if (v && opts.indexOf(v) === -1) opts.push(v);
+        control = '<select id="' + id + '" name="' + f.name + '"><option value="">—</option>' +
+          opts.map((o) => '<option' + (o === v ? " selected" : "") + ">" + esc(o) + "</option>").join("") + "</select>";
+      } else if (f.type === "textarea") {
+        control = '<textarea id="' + id + '" name="' + f.name + '" rows="3">' + esc(v) + "</textarea>";
+      } else {
+        control = '<input id="' + id + '" name="' + f.name + '" type="' + f.type + '" value="' + esc(v) + '"' +
+          (f.placeholder ? ' placeholder="' + esc(f.placeholder) + '"' : "") + (f.required ? " required" : "") + ">";
+      }
+      return '<div class="field ' + cls + '"><label for="' + id + '">' + esc(f.label) + (f.required ? ' <span style="color:var(--danger)">*</span>' : "") + "</label>" + control + "</div>";
+    }
+
+    function formHtml(prefix, data, extra) {
+      return GROUPS.map(([title, fields]) =>
+        '<div class="fgroup"><h4>' + esc(title) + '</h4><div class="fgrid">' + fields.map((f) => fieldHtml(f, prefix, data ? data[f.name] : "")).join("") + "</div></div>"
+      ).join("") + (extra || "");
+    }
+
+    function collect(form) {
+      const out = {};
+      GROUPS.forEach(([, fields]) => fields.forEach((f) => {
+        const el = form.querySelector('[name="' + f.name + '"]');
+        if (el) out[f.name] = el.value.trim();
+      }));
+      return out;
+    }
+
+    // ------------------------------------------------------------ http
+    async function authFetch(url, opts) {
+      opts = opts || {};
+      const headers = Object.assign({ Accept: "application/json", Authorization: "Basic " + auth, "X-Requested-With": "XMLHttpRequest" }, opts.headers || {});
+      let body = opts.body;
+      if (body && typeof body !== "string") { headers["Content-Type"] = "application/json"; body = JSON.stringify(body); }
+      const res = await fetch(url, Object.assign({}, opts, { headers, body }));
+      let data = null;
+      try { data = await res.json(); } catch (e) { /* empty */ }
+      if (res.status === 401) { showLogin("Session expired — please sign in again."); throw new Error("Unauthorized"); }
+      if (!res.ok) {
+        let d = data && data.detail;
+        if (Array.isArray(d)) d = d.map((x) => (Array.isArray(x.loc) ? String(x.loc[x.loc.length - 1]).replace(/_/g, " ") + ": " : "") + x.msg).join("; ");
+        const err = new Error(d || "Request failed (" + res.status + ")");
+        err.status = res.status;
+        throw err;
+      }
+      return data;
+    }
+
+    // ------------------------------------------------------------ auth flow
+    function showLogin(msg) {
+      auth = null;
+      try { sessionStorage.removeItem("adminAuth"); } catch (e) { /* ignore */ }
+      document.getElementById("app-view").hidden = true;
+      document.getElementById("login-view").hidden = false;
+      const err = document.getElementById("login-err");
+      if (msg) { err.textContent = msg; err.classList.add("show"); } else err.classList.remove("show");
+    }
+
+    async function enterApp() {
+      document.getElementById("login-view").hidden = true;
+      document.getElementById("app-view").hidden = false;
+      document.getElementById("create-form").innerHTML = formHtml("c_", null,
+        '<div class="fgroup"><h4>Account &amp; notifications</h4><div class="fgrid">' +
+        '<div class="field span-2"><label for="c_customer_email">Link to customer account (email, optional)</label><input id="c_customer_email" type="email" placeholder="Leave blank to auto-link by receiver email"></div>' +
+        '<div class="field span-2" style="align-self:end"><label class="checkbox"><input type="checkbox" id="c_notify" checked> Email receiver on updates</label></div>' +
+        "</div></div>" +
+        '<button class="btn btn-primary" type="submit" id="create-btn"><i data-lucide="plus"></i> Create shipment</button>');
+      refreshIcons();
+      await loadStats();
+      setTimeout(() => window.AdminTour && AdminTour.maybeAuto("main"), 700);
+      loadShipments();
+    }
+
+    window.adminLogout = function () { showLogin(); document.getElementById("a-pass").value = ""; };
+
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const u = document.getElementById("a-user").value.trim();
+      const p = document.getElementById("a-pass").value;
+      const err = document.getElementById("login-err");
+      err.classList.remove("show");
+      const candidate = btoa(unescape(encodeURIComponent(u + ":" + p)));
+      try {
+        const res = await fetch("/api/admin/stats", { headers: { Authorization: "Basic " + candidate, "X-Requested-With": "XMLHttpRequest" } });
+        if (res.status === 429) throw new Error("Too many failed attempts. Try again later.");
+        if (!res.ok) throw new Error("Invalid username or password.");
+        auth = candidate;
+        try { sessionStorage.setItem("adminAuth", auth); } catch (e2) { /* ignore */ }
+        enterApp();
+      } catch (ex) {
+        err.textContent = ex.message;
+        err.classList.add("show");
+      }
+    });
+
+    // ------------------------------------------------------------ stats + tabs
+    async function loadStats() {
+      const s = await authFetch("/api/admin/stats");
+      document.querySelectorAll("[data-stat]").forEach((el) => { el.textContent = s[el.dataset.stat] ?? "–"; });
+      if (Array.isArray(s.statuses)) STATUSES = s.statuses;
+      const sel = document.getElementById("status-filter");
+      if (sel.options.length <= 1) STATUSES.forEach((st) => sel.add(new Option(st, st)));
+    }
+
+    document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {
+      document.querySelectorAll(".tabs button").forEach((x) => x.classList.toggle("active", x === b));
+      document.querySelectorAll("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== b.dataset.tab; });
+      if (b.dataset.tab === "customers") loadCustomers();
+      if (b.dataset.tab === "subscribers") loadSubscribers();
+    }));
+
+    // ------------------------------------------------------------ shipments list
+    window.loadShipments = async function () {
+      const q = document.getElementById("q").value.trim();
+      const st = document.getElementById("status-filter").value;
+      const params = new URLSearchParams({ q, status_filter: st });
+      const body = document.getElementById("ship-rows");
+      try {
+        const rows = await authFetch("/api/admin/shipments?" + params);
+        body.innerHTML = rows.length ? rows.map((r) =>
+          "<tr><td class='mono'><strong>" + esc(r.tracking_number) + "</strong></td><td>" + esc(r.receiver_name) +
+          "<div class='small muted'>" + esc(r.receiver_email) + "</div></td><td>" + esc(r.destination || "—") + "</td><td>" + statusBadge(r.current_status, r.journey_state === "moving") +
+          "</td><td class='nowrap'>" + esc(fmtDate(r.created_at, false)) + "</td><td><button class='btn btn-primary btn-sm' data-open='" + r.id + "'>Open</button></td></tr>"
+        ).join("") : '<tr class="empty-row"><td colspan="6">No shipments found.</td></tr>';
+      } catch (e) { if (e.message !== "Unauthorized") body.innerHTML = '<tr class="empty-row"><td colspan="6">' + esc(e.message) + "</td></tr>"; }
+    };
+    let qTimer = null;
+    document.getElementById("q").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(loadShipments, 300); });
+    document.getElementById("status-filter").addEventListener("change", loadShipments);
+    document.getElementById("ship-rows").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-open]");
+      if (b) openShipment(+b.dataset.open);
+    });
+
+    // ------------------------------------------------------------ create
+    document.getElementById("create-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const err = document.getElementById("create-err");
+      err.classList.remove("show");
+      const data = collect(form);
+      if (!data.sender_name || !data.receiver_name || !data.receiver_email) {
+        err.textContent = "Sender name, receiver name and receiver email are required.";
+        err.classList.add("show");
+        return;
+      }
+      data.customer_email = document.getElementById("c_customer_email").value.trim() || null;
+      data.notify_email = document.getElementById("c_notify").checked;
+      const btn = document.getElementById("create-btn");
+      btn.disabled = true;
+      btn.textContent = "Creating… (geocoding origin)";
+      try {
+        const res = await authFetch("/api/admin/shipments", { method: "POST", body: data });
+        form.reset();
+        document.getElementById("new-ship").open = false;
+        const tn = res.tracking_number;
+        document.getElementById("created-slot").innerHTML =
+          '<div class="created-box"><i data-lucide="check-circle-2" style="color:var(--success)"></i><span>Shipment created:</span><span class="mono">' + esc(tn) + "</span>" +
+          '<button class="btn btn-ghost btn-sm" data-copy="' + esc(tn) + '"><i data-lucide="copy"></i> Copy</button>' +
+          '<a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="/track/' + encodeURIComponent(tn) + '"><i data-lucide="external-link"></i> Public page</a>' +
+          '<button class="btn btn-primary btn-sm" data-open="' + res.id + '">Open</button></div>';
+        refreshIcons();
+        toast("Shipment " + tn + " created", "success");
+        loadStats(); loadShipments();
+      } catch (ex) {
+        if (ex.message !== "Unauthorized") { err.textContent = ex.message; err.classList.add("show"); }
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="plus"></i> Create shipment';
+        refreshIcons();
+      }
+    });
+    document.getElementById("created-slot").addEventListener("click", (e) => {
+      const c = e.target.closest("[data-copy]");
+      if (c) copyText(c.dataset.copy, c);
+      const o = e.target.closest("[data-open]");
+      if (o) openShipment(+o.dataset.open);
+    });
+
+    // ------------------------------------------------------------ modal helpers
+    function openModal(id) { document.getElementById(id).classList.add("open"); document.body.style.overflow = "hidden"; }
+    window.closeModal = function (id) {
+      document.getElementById(id).classList.remove("open");
+      if (!document.querySelector(".modal-backdrop.open")) document.body.style.overflow = "";
+      if (id === "ship-modal" && miniMap) { miniMap.map.remove(); miniMap = null; }
+    };
+    document.querySelectorAll(".modal-backdrop").forEach((m) => m.addEventListener("mousedown", (e) => { if (e.target === m) closeModal(m.id); }));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") document.querySelectorAll(".modal-backdrop.open").forEach((m) => closeModal(m.id)); });
+
+    const toLocalInput = (iso) => {
+      const d = iso ? new Date(iso) : null;
+      if (!d || isNaN(d)) return "";
+      const p = (n) => String(n).padStart(2, "0");
+      return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes());
+    };
+
+    // ------------------------------------------------------------ shipment detail
+    async function openShipment(id) {
+      try {
+        const s = await authFetch("/api/admin/shipments/" + id);
+        current = s;
+        renderShipment(s);
+        openModal("ship-modal");
+        setTimeout(() => miniMap && miniMap.map.invalidateSize() && miniMap.fit(), 60);
+        setTimeout(() => window.AdminTour && AdminTour.maybeAuto("shipment"), 500);
+      } catch (e) { if (e.message !== "Unauthorized") toast(e.message, "error"); }
+    }
+    async function reloadShipment() {
+      if (!current) return;
+      const s = await authFetch("/api/admin/shipments/" + current.id);
+      current = s;
+      renderShipment(s);
+      loadStats(); loadShipments();
+    }
+
+    function renderShipment(s) {
+      document.getElementById("sm-title").textContent = s.tracking_number;
+      document.getElementById("sm-badge").innerHTML = statusBadge(s.current_status, s.journey_state === "moving");
+      document.getElementById("sm-public").href = "/track/" + encodeURIComponent(s.tracking_number);
+
+      const kv = [["Sender", s.sender_name], ["Receiver", s.receiver_name], ["Receiver email", s.receiver_email], ["Origin", s.origin], ["Destination", s.destination],
+        ["Service", s.service_type], ["Weight", s.weight], ["ETA", s.estimated_delivery], ["Email updates", s.notify_email ? "On" : "Off"]];
+      const routeOk = Array.isArray(s.route_path) && s.route_path.length >= 2;
+      const state = s.journey_state || "not_started";
+      const wps = (s.journey_waypoints || []);
+      const nowPlus = (h) => toLocalInput(new Date(Date.now() + h * 3600 * 1000).toISOString());
+
+      const events = (s.events || []).slice().reverse();
+      const tl = events.length ? events.map((ev, i) =>
+        '<li class="tl-item ' + (i === 0 ? "current" : "done") + '"><span class="tl-dot"></span>' +
+        '<div class="tl-status">' + esc(ev.status) + "</div>" +
+        (ev.location_name ? '<div class="tl-loc">📍 ' + esc(ev.location_name) + (ev.lat == null ? ' <span class="tag" style="background:#fef3c7;color:#b45309">not geocoded</span>' : "") + "</div>" : "") +
+        '<div class="tl-time">' + esc(fmtDate(ev.timestamp)) + (ev.updated_by ? " · " + esc(ev.updated_by) : "") + "</div>" +
+        (ev.notes ? '<div class="tl-notes">' + esc(ev.notes) + "</div>" : "") +
+        '<div class="tl-actions"><button class="icon-btn" title="Delete checkpoint" data-del-event="' + ev.id + '"><i data-lucide="trash-2"></i></button></div></li>'
+      ).join("") : '<li class="muted small">No checkpoints.</li>';
+
+      document.getElementById("sm-body").innerHTML =
+        '<div class="panel" style="margin-bottom:22px"><div class="kv">' + kv.map(([k, v]) => '<div><div class="k">' + esc(k) + '</div><div class="v">' + esc(v || "—") + "</div></div>").join("") + "</div></div>" +
+
+        '<div class="modal-grid">' +
+          '<div>' +
+            '<div class="panel" style="margin-bottom:22px"><h4><i data-lucide="map-pin-plus"></i> Add checkpoint</h4>' +
+              '<form id="event-form">' +
+                '<div class="field"><label for="ev-status">Status</label><select id="ev-status">' + STATUSES.map((x) => "<option" + (x === s.current_status ? " selected" : "") + ">" + esc(x) + "</option>").join("") + "</select></div>" +
+                '<div class="field"><label for="ev-loc">Location</label><input id="ev-loc" placeholder="Typed address — geocoded (e.g. Lyon, France)"><span class="hint">Geocoded with OpenStreetMap. Use "City, Country" for best results.</span></div>' +
+                '<div class="field"><label for="ev-notes">Remarks</label><textarea id="ev-notes" rows="2"></textarea></div>' +
+                '<div class="field"><label for="ev-by">Updated by</label><input id="ev-by" placeholder="e.g. Hub operator"></div>' +
+                '<button class="btn btn-primary" type="submit" id="ev-btn"><i data-lucide="plus"></i> Add checkpoint</button>' +
+              "</form></div>" +
+            '<div class="panel"><h4><i data-lucide="list-checks"></i> Timeline</h4><ul class="timeline admin-tl">' + tl + "</ul></div>" +
+          "</div>" +
+          "<div>" +
+            '<div class="panel" style="margin-bottom:22px"><h4><i data-lucide="map"></i> Map</h4><div id="mini-map" class="mini-map"></div></div>' +
+            '<div class="panel"><h4 style="justify-content:space-between"><span style="display:flex;gap:8px;align-items:center"><i data-lucide="route"></i> Live journey</span><span class="state-pill ' + esc(state) + '">' + esc(state.replace("_", " ")) + "</span></h4>" +
+              '<p class="small muted" style="margin:-6px 0 4px">Makes the courier marker move along a road route on the public tracking page. Optional — checkpoints alone also work.</p>' +
+              '<div class="j-step"><span class="n">1</span><div><strong>Build the route</strong><span class="h">Type places as "City, Country". Add stops in between if you like.</span></div></div>' +
+              '<div class="field"><label for="j-origin">Origin</label><input id="j-origin" value="' + esc(s.journey_origin || s.origin || "") + '"></div>' +
+              '<label class="small" style="font-weight:600">Waypoints</label><div id="wp-list" style="margin-top:6px"></div>' +
+              '<button type="button" class="btn btn-ghost btn-sm" id="wp-add" style="margin-bottom:14px"><i data-lucide="plus"></i> Add waypoint</button>' +
+              '<div class="field"><label for="j-dest">Destination</label><input id="j-dest" value="' + esc(s.journey_destination || s.destination || "") + '"></div>' +
+              '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary btn-sm" id="j-build"><i data-lucide="waypoints"></i> Build route</button>' +
+              '<span class="small muted" id="j-points">' + (routeOk ? s.route_path.length + " route points cached" : "No route yet") + "</span></div>" +
+              '<div class="j-step"><span class="n">2</span><div><strong>Set the times</strong><span class="h">When it leaves and when it should arrive. The marker\'s speed is worked out from these.</span></div></div>' +
+              '<div class="form-row"><div class="field"><label for="j-start">Departure</label><input type="datetime-local" id="j-start" value="' + (s.journey_start ? toLocalInput(s.journey_start) : nowPlus(0)) + '"></div>' +
+              '<div class="field"><label for="j-end">Arrival (ETA)</label><input type="datetime-local" id="j-end" value="' + (s.journey_end ? toLocalInput(s.journey_end) : nowPlus(24)) + '"></div></div>' +
+              '<div class="small muted">Times are in your local timezone.</div>' +
+              '<div class="j-step"><span class="n">3</span><div><strong>Start it</strong><span class="h">' + (routeOk ? "Press Start. Pause/Resume for delays, Arrived when it reaches the destination." : "Build the route first (step 1) — then Start unlocks.") + '</span></div></div>' +
+              '<div class="j-actions">' +
+                '<button class="btn btn-primary btn-sm" data-j="start"' + (routeOk && state !== "paused" ? "" : " disabled") + '><i data-lucide="play"></i> ' + (state === "moving" ? "Restart" : "Start") + "</button>" +
+                '<button class="btn btn-ghost btn-sm" data-j="pause"' + (state === "moving" ? "" : " disabled") + '><i data-lucide="pause"></i> Pause</button>' +
+                '<button class="btn btn-ghost btn-sm" data-j="resume"' + (state === "paused" ? "" : " disabled") + '><i data-lucide="play-circle"></i> Resume</button>' +
+                '<button class="btn btn-accent btn-sm" data-j="arrive"' + (routeOk && (state === "moving" || state === "paused") ? "" : " disabled") + '><i data-lucide="flag"></i> Arrived</button>' +
+              "</div>" +
+              '<p class="small muted" style="margin:12px 0 0">Each step emails the receiver (if updates are on). Pause sets the status to "On Hold / Delayed"; Resume pushes the ETA back by the pause length.</p>' +
+            "</div>" +
+          "</div>" +
+        "</div>" +
+
+        '<div class="panel" style="margin-top:22px"><h4><i data-lucide="pencil"></i> Edit details</h4><form id="edit-form" novalidate>' +
+          '<div class="fgroup"><h4>Status &amp; notifications</h4><div class="fgrid">' +
+            '<div class="field span-2"><label for="e_current_status">Current status (without adding a checkpoint)</label><select id="e_current_status">' + STATUSES.map((x) => "<option" + (x === s.current_status ? " selected" : "") + ">" + esc(x) + "</option>").join("") + "</select></div>" +
+            '<div class="field span-2" style="align-self:end"><label class="checkbox"><input type="checkbox" id="e_notify"' + (s.notify_email ? " checked" : "") + "> Email receiver on updates</label></div>" +
+          "</div></div>" +
+          formHtml("e_", s) +
+          '<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-primary" type="submit"><i data-lucide="save"></i> Save changes</button>' +
+          '<button class="btn btn-danger" type="button" id="del-ship"><i data-lucide="trash-2"></i> Delete shipment</button></div>' +
+        "</form></div>";
+
+      // waypoints
+      const wpList = document.getElementById("wp-list");
+      const addWp = (val) => {
+        const row = document.createElement("div");
+        row.className = "wp-row";
+        row.innerHTML = '<input class="input" placeholder="City, Country" value="' + esc(val || "") + '"><button type="button" class="icon-btn" aria-label="Remove waypoint"><i data-lucide="x"></i></button>';
+        row.querySelector("button").addEventListener("click", () => row.remove());
+        wpList.appendChild(row);
+        refreshIcons();
+      };
+      wps.forEach(addWp);
+      document.getElementById("wp-add").addEventListener("click", () => addWp(""));
+
+      refreshIcons();
+
+      // map
+      if (miniMap) { miniMap.map.remove(); miniMap = null; }
+      miniMap = initTrackingMap("mini-map", {
+        events: s.events, current: { lat: s.current_lat, lng: s.current_lng, status: s.current_status }, route_path: s.route_path,
+        journey: { start: s.journey_start, end: s.journey_end, state: s.journey_state, paused_frac: s.journey_paused_frac }, server_now: s.server_now, label: s.tracking_number,
+      });
+    }
+
+    // delegated modal actions
+    document.getElementById("sm-body").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (e.target.id === "event-form") {
+        const btn = document.getElementById("ev-btn");
+        btn.disabled = true;
+        try {
+          const res = await authFetch("/api/admin/shipments/" + current.id + "/events", { method: "POST", body: {
+            status: document.getElementById("ev-status").value,
+            location_name: document.getElementById("ev-loc").value.trim() || null,
+            notes: document.getElementById("ev-notes").value.trim() || null,
+            updated_by: document.getElementById("ev-by").value.trim() || null,
+          } });
+          toast(res.geocoded || !res.event.location_name ? "Checkpoint added" : "Checkpoint added — location could not be geocoded", res.geocoded || !res.event.location_name ? "success" : "error");
+          await reloadShipment();
+        } catch (ex) { if (ex.message !== "Unauthorized") toast(ex.message, "error"); btn.disabled = false; }
+      }
+      if (e.target.id === "edit-form") {
+        const data = collect(e.target);
+        data.current_status = document.getElementById("e_current_status").value;
+        data.notify_email = document.getElementById("e_notify").checked;
+        try {
+          await authFetch("/api/admin/shipments/" + current.id, { method: "PATCH", body: data });
+          toast("Shipment saved", "success");
+          await reloadShipment();
+        } catch (ex) { if (ex.message !== "Unauthorized") toast(ex.message, "error"); }
+      }
+    });
+
+    document.getElementById("sm-body").addEventListener("click", async (e) => {
+      const del = e.target.closest("[data-del-event]");
+      if (del) {
+        if (!confirm("Delete this checkpoint?")) return;
+        try { await authFetch("/api/admin/events/" + del.dataset.delEvent, { method: "DELETE" }); toast("Checkpoint deleted", "success"); await reloadShipment(); }
+        catch (ex) { if (ex.message !== "Unauthorized") toast(ex.message, "error"); }
+        return;
+      }
+      if (e.target.closest("#del-ship")) {
+        if (!confirm("Delete shipment " + current.tracking_number + " and all its checkpoints? This cannot be undone.")) return;
+        try {
+          await authFetch("/api/admin/shipments/" + current.id, { method: "DELETE" });
+          toast("Shipment deleted", "success");
+          closeModal("ship-modal");
+          current = null;
+          loadStats(); loadShipments();
+        } catch (ex) { if (ex.message !== "Unauthorized") toast(ex.message, "error"); }
+        return;
+      }
+      if (e.target.closest("#j-build")) {
+        const btn = e.target.closest("#j-build");
+        const origin = document.getElementById("j-origin").value.trim();
+        const destination = document.getElementById("j-dest").value.trim();
+        const waypoints = Array.from(document.querySelectorAll("#wp-list input")).map((i) => i.value.trim()).filter(Boolean);
+        if (!origin || !destination) return toast("Origin and destination are required", "error");
+        btn.disabled = true;
+        document.getElementById("j-points").textContent = "Geocoding stops and fetching road route…";
+        try {
+          const res = await authFetch("/api/admin/shipments/" + current.id + "/route", { method: "POST", body: { origin, destination, waypoints } });
+          toast("Route built: " + res.points + " points", "success");
+          await reloadShipment();
+        } catch (ex) {
+          if (ex.message !== "Unauthorized") toast(ex.message, "error");
+          btn.disabled = false;
+          document.getElementById("j-points").textContent = "Route failed";
+        }
+        return;
+      }
+      const j = e.target.closest("[data-j]");
+      if (j) {
+        const action = j.dataset.j;
+        let body;
+        if (action === "start") {
+          const sv = document.getElementById("j-start").value, ev = document.getElementById("j-end").value;
+          if (!ev) return toast("Set an arrival (ETA) time", "error");
+          const startIso = sv ? new Date(sv).toISOString() : null;
+          const endIso = new Date(ev).toISOString();
+          if (startIso && new Date(endIso) <= new Date(startIso)) return toast("Arrival must be after departure", "error");
+          body = { journey_start: startIso, journey_end: endIso };
+        }
+        if (action === "arrive" && !confirm("Mark the journey as arrived? The marker will snap to the destination.")) return;
+        j.disabled = true;
+        try {
+          await authFetch("/api/admin/shipments/" + current.id + "/journey/" + action, { method: "POST", body: body || {} });
+          toast({ start: "Journey started", pause: "Journey paused", resume: "Journey resumed — ETA pushed back", arrive: "Journey arrived" }[action], "success");
+          await reloadShipment();
+        } catch (ex) { if (ex.message !== "Unauthorized") toast(ex.message, "error"); j.disabled = false; }
+      }
+    });
+
+    // ------------------------------------------------------------ customers
+    function renderCustomers() {
+      const q = document.getElementById("cq").value.trim().toLowerCase();
+      const rows = customersCache.filter((c) => !q || [c.first_name, c.last_name, c.email, c.phone].join(" ").toLowerCase().includes(q));
+      document.getElementById("cust-rows").innerHTML = rows.length ? rows.map((c) =>
+        "<tr><td><strong>" + esc(c.first_name + " " + c.last_name) + "</strong></td><td>" + esc(c.email) + "</td><td>" + esc(c.phone || "—") +
+        "</td><td class='nowrap'>" + esc(fmtDate(c.created_at, false)) + "</td><td class='nowrap'>" + esc(c.last_login ? fmtDate(c.last_login) : "Never") +
+        "</td><td>" + c.shipment_count + "</td><td class='nowrap'><button class='btn btn-ghost btn-sm' data-cview='" + c.id + "'>View shipments</button> " +
+        "<button class='btn btn-danger btn-sm' data-creset='" + c.id + "'>Reset password</button></td></tr>"
+      ).join("") : '<tr class="empty-row"><td colspan="7">No customers found.</td></tr>';
+    }
+    async function loadCustomers() {
+      try { customersCache = await authFetch("/api/admin/customers"); renderCustomers(); }
+      catch (e) { if (e.message !== "Unauthorized") toast(e.message, "error"); }
+    }
+    document.getElementById("cq").addEventListener("input", renderCustomers);
+    document.getElementById("cust-rows").addEventListener("click", async (e) => {
+      const v = e.target.closest("[data-cview]");
+      const r = e.target.closest("[data-creset]");
+      if (v) {
+        try {
+          const d = await authFetch("/api/admin/customers/" + v.dataset.cview + "/shipments");
+          document.getElementById("cm-title").textContent = d.customer.first_name + " " + d.customer.last_name;
+          document.getElementById("cm-body").innerHTML = '<p class="muted">' + esc(d.customer.email) + "</p>" + (d.shipments.length
+            ? '<div class="table-wrap"><table class="dtable" style="min-width:480px"><thead><tr><th>Tracking #</th><th>Destination</th><th>Status</th><th>Source</th></tr></thead><tbody>' +
+              d.shipments.map((s) => "<tr><td class='mono'><a href='/track/" + encodeURIComponent(s.tracking_number) + "' target='_blank' rel='noopener'>" + esc(s.tracking_number) + "</a></td><td>" + esc(s.destination || "—") + "</td><td>" + statusBadge(s.current_status) + "</td><td>" + (s.source === "followed" ? '<span class="tag">Following</span>' : "Owned") + "</td></tr>").join("") +
+              "</tbody></table></div>"
+            : '<div class="empty-state" style="padding:24px"><div class="es-emoji">📦</div><p class="muted">No shipments.</p></div>');
+          openModal("cust-modal");
+        } catch (ex) { if (ex.message !== "Unauthorized") toast(ex.message, "error"); }
+      }
+      if (r) {
+        const c = customersCache.find((x) => String(x.id) === r.dataset.creset);
+        if (!confirm("Reset the password for " + (c ? c.email : "this customer") + "? Their current password will stop working.")) return;
+        try {
+          const d = await authFetch("/api/admin/customers/" + r.dataset.creset + "/reset-password", { method: "POST" });
+          document.getElementById("cm-title").textContent = "Temporary password";
+          document.getElementById("cm-body").innerHTML = "<p>New temporary password for <strong>" + esc(d.email) + "</strong>. It is shown only once — share it securely and ask them to log in.</p>" +
+            '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="temp-pw mono">' + esc(d.temp_password) + '</span><button class="btn btn-primary btn-sm" id="copy-temp"><i data-lucide="copy"></i> Copy</button></div>';
+          document.getElementById("copy-temp").addEventListener("click", (ev) => copyText(d.temp_password, ev.currentTarget));
+          refreshIcons();
+          openModal("cust-modal");
+        } catch (ex) { if (ex.message !== "Unauthorized") toast(ex.message, "error"); }
+      }
+    });
+
+    // ------------------------------------------------------------ subscribers
+    async function loadSubscribers() {
+      try {
+        const rows = await authFetch("/api/admin/subscribers");
+        document.getElementById("sub-rows").innerHTML = rows.length
+          ? rows.map((s) => "<tr><td>" + esc(s.email) + "</td><td>" + esc(fmtDate(s.created_at)) + "</td></tr>").join("")
+          : '<tr class="empty-row"><td colspan="2">No subscribers yet.</td></tr>';
+      } catch (e) { if (e.message !== "Unauthorized") toast(e.message, "error"); }
+    }
+
+    // ------------------------------------------------------------ boot
+    (async function () {
+      try {
+        const cfg = await fetch("/api/config").then((r) => r.json());
+        document.querySelectorAll("[data-brand]").forEach((el) => { el.textContent = cfg.name; });
+        document.querySelectorAll("[data-abbr]").forEach((el) => { el.textContent = cfg.abbr; });
+        document.title = "Admin — " + cfg.name;
+      } catch (e) { /* ignore */ }
+      if (auth) {
+        try { await enterApp(); } catch (e) { if (e.message !== "Unauthorized") showLogin("Could not load the dashboard."); }
+      }
+    })();
+  })();
+  </script>
+
+  <script>
+  /* ================================================================
+     Guided tour — spotlight + bouncing arrow + explanation card.
+     AdminTour.start("main" | "shipment"), Back/Next, ←/→ keys, Esc.
+     ================================================================ */
+  window.AdminTour = (function () {
+    "use strict";
+    const REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const $ = (sel) => document.querySelector(sel);
+    const closestPanel = (sel) => { const el = $(sel); return el ? el.closest(".panel") : null; };
+    const ARROW = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 22 3.5 12.5H9V2h6v10.5h5.5z"/></svg>';
+
+    // ------------------------------------------------------------ steps
+    const TOURS = {
+      main: [
+        { el: "#go-site", icon: "globe", title: "Go to your website", text: "<p>Opens the public site in a new tab — what your customers see. Handy for checking a tracking page right after you update it.</p>" },
+        { el: "#stats", icon: "bar-chart-3", title: "Your numbers at a glance", text: "<p>Total shipments, how many are moving, delivered, still pending, and created this month. They update after every change you make.</p>" },
+        { el: "#quick-start", icon: "list-ordered", title: "Quick start", text: "<p>The whole process in 4 lines. Keep it open while you learn; click its title to fold it away later.</p>" },
+        { el: "#new-ship", icon: "plus-circle", title: "Step 1 · Create a shipment", text: "<p>Click to expand the form. Only <b>sender name</b>, <b>receiver name</b> and <b>receiver email</b> are required — fill in origin and destination too so the map has somewhere to start.</p><p>After <b>Create</b> you get the tracking number, with buttons to copy it or open its public page.</p>", tip: "The receiver gets an email with the tracking number automatically (if email is set up)." },
+        { el: "#q", icon: "search", title: "Find a shipment", text: "<p>Search by tracking number, receiver name, email or destination. Results filter as you type.</p>" },
+        { el: "#status-filter", icon: "filter", title: "Filter by status", text: "<p>Show only shipments that are e.g. <b>In Transit</b> or <b>Held at Customs</b>.</p>" },
+        { el: () => $("#ship-rows [data-open]"), icon: "mouse-pointer-click", title: "Step 2 · Open a shipment", text: "<p>Press <b>Open</b> to manage it: add checkpoints, run the live map, edit details. A second tour explains that screen the first time you open one.</p>" },
+        { el: ".tabs", icon: "layout-list", title: "Customers & subscribers", text: "<ul><li><b>Customers</b> — people with accounts; see their shipments or reset a password.</li><li><b>Subscribers</b> — emails from the newsletter form.</li></ul>" },
+        { el: "#tour-btn", icon: "sparkles", title: "Replay any time", text: "<p>That's the overview! Click <b>Guided tour</b> whenever you want to see this again.</p>" },
+      ],
+      shipment: [
+        { el: "#sm-title", icon: "package", title: "One shipment, one screen", text: "<p>Everything about this shipment is managed here. The tracking number and its current status are at the top.</p>" },
+        { el: "#sm-public", icon: "external-link", title: "See what the customer sees", text: "<p>Opens this shipment's public tracking page in a new tab. Changes you make here show there within 30 seconds — no refresh needed.</p>" },
+        { el: () => $("#sm-body .panel"), icon: "clipboard-list", title: "Summary", text: "<p>Key facts: who sent it, who receives it, where it's going, the ETA and whether email updates are on.</p>" },
+        { el: () => closestPanel("#event-form"), icon: "map-pin-plus", title: "Add checkpoint — your main job", text: "<p>Each time the parcel is collected, scanned at a hub or delivered, add a checkpoint here. Let's go through the fields one by one.</p>" },
+        { el: "#ev-status", icon: "list", title: "① Choose the status", text: "<p>What happened, for example:</p><ul><li><b>Picked Up</b> → <b>In Transit</b> → <b>Arrived at Hub</b> → <b>Out for Delivery</b> → <b>Delivered</b></li><li><b>Held at Customs</b> / <b>On Hold</b> if there's a delay</li></ul>" },
+        { el: "#ev-loc", icon: "map-pin", title: "② Type where it is", text: "<p>Type a place as <b>City, Country</b>. It's found on the map automatically and a pin is added.</p>", demo: "Lyon, France" },
+        { el: "#ev-notes", icon: "message-square", title: "③ Remarks (optional)", text: "<p>A short note the customer will read, e.g. “Arrived at regional sorting hub”.</p>", demo: "Arrived at regional sorting hub" },
+        { el: "#ev-by", icon: "user-round", title: "④ Updated by (optional)", text: "<p>Who recorded it — shown in the scan log. Leave empty and it says “Admin”.</p>" },
+        { el: "#ev-btn", icon: "check-circle-2", title: "⑤ Save the checkpoint", text: "<p>Press <b>Add checkpoint</b>. It immediately appears in the timeline and map below, on the public page, and the receiver gets an email.</p>", tip: "Nothing is saved during this tour — the example text disappears when you move on." },
+        { el: () => closestPanel(".admin-tl"), icon: "list-checks", title: "Timeline", text: "<p>Every checkpoint, newest first. Made a mistake? Click the <b>bin icon</b> on that row — the shipment's status goes back to the previous checkpoint automatically.</p>" },
+        { el: "#mini-map", icon: "map", title: "Map preview", text: "<p>The same map customers see: checkpoint pins, the route, and the moving courier if a live journey is running.</p>" },
+        { el: () => closestPanel("#j-build"), icon: "route", title: "Live journey (optional)", text: "<p>Makes a courier marker <b>move by itself</b> along a road route on the tracking page — great for long trips. Three steps:</p>" },
+        { el: "#j-origin", icon: "flag", title: "Step 1a · Start and end", text: "<p>Type the start (<b>Origin</b>) and end (<b>Destination</b>) as “City, Country”. They're pre-filled from the shipment.</p>" },
+        { el: "#wp-add", icon: "plus", title: "Step 1b · Stops in between (optional)", text: "<p>Add waypoints to force the route through particular cities — e.g. a hub. Remove one with its ✕.</p>" },
+        { el: "#j-build", icon: "waypoints", title: "Step 1c · Build route", text: "<p>Finds a real road route between your stops and saves it. The point count appears next to the button.</p>" },
+        { el: () => { const e = $("#j-start"); return e ? e.closest(".form-row") : null; }, icon: "calendar-clock", title: "Step 2 · Departure and arrival", text: "<p>When the parcel leaves and when it should arrive. The marker's speed is worked out from these, and the arrival becomes the customer's ETA.</p>" },
+        { el: ".j-actions", icon: "play", title: "Step 3 · Control the journey", text: "<ul><li><b>Start</b> — the marker begins moving.</li><li><b>Pause</b> — freezes it, status becomes “On Hold / Delayed”.</li><li><b>Resume</b> — continues; the ETA moves back by the pause length.</li><li><b>Arrived</b> — snaps it to the destination, status “Out for Delivery”.</li></ul>", tip: "Buttons only light up when they make sense — e.g. Resume only while paused." },
+        { el: ".state-pill", icon: "activity", title: "Journey state", text: "<p>Shows whether the journey is <b>not started</b>, <b>moving</b>, <b>paused</b> or <b>arrived</b>.</p>" },
+        { el: () => closestPanel("#edit-form"), icon: "pencil", title: "Edit details", text: "<p>Fix typos or fill in anything you skipped — addresses, weight, carrier, dimensions, comments.</p>" },
+        { el: "#e_current_status", icon: "refresh-cw", title: "Change status without a checkpoint", text: "<p>Quietly correct the status shown to customers. No timeline entry and no email.</p>" },
+        { el: "#e_notify", icon: "bell", title: "Email updates on/off", text: "<p>Untick to stop emailing the receiver about this shipment.</p>" },
+        { el: () => $("#edit-form button[type=submit]"), icon: "save", title: "Save changes", text: "<p>Saves everything in the edit form.</p>" },
+        { el: "#del-ship", icon: "trash-2", title: "Delete shipment", text: "<p>Removes the shipment and all its checkpoints for good. You'll be asked to confirm.</p>" },
+        { el: "#sm-tour", icon: "sparkles", title: "You're ready!", text: "<p>Click <b>How this works</b> any time to replay this walkthrough.</p>" },
+      ],
+    };
+
+    // ------------------------------------------------------------ state + DOM
+    let steps = [], idx = 0, name = "", root, spot, arrow, card, demo = null, raf = 0, active = false;
+
+    function build() {
+      if (root) return;
+      root = document.createElement("div");
+      root.className = "tour-root";
+      root.hidden = true;
+      root.setAttribute("role", "dialog");
+      root.setAttribute("aria-modal", "true");
+      root.setAttribute("aria-label", "Guided tour");
+      root.innerHTML = '<div class="tour-blocker"></div><div class="tour-spot"></div><div class="tour-arrow">' + ARROW + '</div><div class="tour-card"><span class="tc-caret"></span><div class="tc-body"></div></div>';
+      document.body.appendChild(root);
+      spot = root.querySelector(".tour-spot");
+      arrow = root.querySelector(".tour-arrow");
+      card = root.querySelector(".tour-card");
+      card.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-tour]");
+        if (!b) return;
+        const a = b.dataset.tour;
+        if (a === "next") go(1);
+        else if (a === "back") go(-1);
+        else end();
+      });
+    }
+
+    const resolve = (s) => { try { return typeof s.el === "function" ? s.el() : $(s.el); } catch (e) { return null; } };
+    const visible = (el) => el && el.getClientRects().length > 0;
+
+    function start(which) {
+      const list = TOURS[which];
+      if (!list) return;
+      build();
+      name = which;
+      steps = list.filter((s) => visible(resolve(s)));
+      if (!steps.length) return;
+      idx = 0;
+      active = true;
+      root.hidden = false;
+      window.addEventListener("keydown", onKey, true);
+      window.addEventListener("resize", schedule);
+      document.addEventListener("scroll", schedule, true);
+      show(true);
+    }
+
+    function end() {
+      if (!active) return;
+      active = false;
+      undoDemo();
+      root.hidden = true;
+      window.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("resize", schedule);
+      document.removeEventListener("scroll", schedule, true);
+      try { localStorage.setItem("tourSeen_" + name, "1"); } catch (e) { /* ignore */ }
+    }
+
+    function go(delta) {
+      const n = idx + delta;
+      if (n < 0) return;
+      if (n >= steps.length) return end();
+      idx = n;
+      show(false);
+    }
+
+    function onKey(e) {
+      if (!active) return;
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); end(); }
+      else if (e.key === "ArrowRight" || e.key === "Enter") { e.preventDefault(); e.stopPropagation(); go(1); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); e.stopPropagation(); go(-1); }
+    }
+
+    function show(first) {
+      undoDemo();
+      const s = steps[idx];
+      const el = resolve(s);
+      if (!visible(el)) return go(1);
+      el.scrollIntoView({ block: "center", inline: "nearest", behavior: REDUCED || first ? "auto" : "smooth" });
+      renderCard(s);
+      position();
+      // re-measure while smooth scrolling settles
+      [120, 260, 450, 700].forEach((t) => setTimeout(() => active && position(), t));
+      if (s.demo) setTimeout(() => active && steps[idx] === s && typeDemo(el, s.demo), REDUCED ? 0 : 550);
+    }
+
+    function renderCard(s) {
+      const pct = Math.round(((idx + 1) / steps.length) * 100);
+      const last = idx === steps.length - 1;
+      card.querySelector(".tc-body").innerHTML =
+        '<div class="tc-top"><span class="tc-step">Step ' + (idx + 1) + " of " + steps.length + "</span>" +
+        '<button class="tc-close" data-tour="end" aria-label="Close tour" title="Close (Esc)"><i data-lucide="x"></i></button></div>' +
+        '<h4><span class="tc-ic"><i data-lucide="' + (s.icon || "info") + '"></i></span>' + s.title + "</h4>" +
+        '<div class="tc-text">' + s.text + (s.tip ? '<div class="tc-tip"><i data-lucide="lightbulb"></i><span>' + s.tip + "</span></div>" : "") + "</div>" +
+        '<div class="tc-bar"><span style="width:' + pct + '%"></span></div>' +
+        '<div class="tc-actions">' +
+          (idx > 0 ? '<button class="btn btn-ghost btn-sm" data-tour="back"><i data-lucide="arrow-left"></i> Back</button>' : '<button class="btn btn-ghost btn-sm" data-tour="end">Skip tour</button>') +
+          '<span class="tc-keys hide-sm">← → keys</span>' +
+          '<button class="btn btn-primary btn-sm" data-tour="next">' + (last ? 'Finish <i data-lucide="check"></i>' : 'Next <i data-lucide="arrow-right"></i>') + "</button>" +
+        "</div>";
+      if (window.lucide) lucide.createIcons();
+      card.classList.remove("enter"); void card.offsetWidth; card.classList.add("enter");
+      const nextBtn = card.querySelector('[data-tour="next"]');
+      if (nextBtn) nextBtn.focus({ preventScroll: true });
+    }
+
+    function schedule() {
+      if (!active || raf) return;
+      raf = requestAnimationFrame(() => { raf = 0; position(); });
+    }
+
+    function position() {
+      const el = resolve(steps[idx]);
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const vw = window.innerWidth, vh = window.innerHeight, pad = 8, gap = 18;
+      spot.style.top = r.top - pad + "px";
+      spot.style.left = r.left - pad + "px";
+      spot.style.width = r.width + pad * 2 + "px";
+      spot.style.height = r.height + pad * 2 + "px";
+
+      const cw = card.offsetWidth, ch = card.offsetHeight;
+      const spaceBelow = vh - r.bottom, spaceAbove = r.top;
+      let place, top;
+      if (spaceBelow >= ch + gap + 50) { place = "below"; top = r.bottom + pad + gap; }
+      else if (spaceAbove >= ch + gap + 50) { place = "above"; top = r.top - pad - gap - ch; }
+      else { place = "center"; top = Math.max(12, vh - ch - 16); }
+      let left = r.left + r.width / 2 - cw / 2;
+      left = Math.max(12, Math.min(left, vw - cw - 12));
+      card.style.top = top + "px";
+      card.style.left = left + "px";
+      card.className = "tour-card " + place + (card.classList.contains("enter") ? " enter" : "");
+      const caret = card.querySelector(".tc-caret");
+      caret.style.left = Math.max(16, Math.min(r.left + r.width / 2 - left - 7, cw - 30)) + "px";
+
+      // bouncing arrow on the side of the target away from the card
+      const ax = Math.max(8, Math.min(r.left + r.width / 2 - 20, vw - 48));
+      if (place === "below" && r.top - pad - 48 > 4) { arrow.className = "tour-arrow down"; arrow.style.top = r.top - pad - 48 + "px"; }
+      else if (place === "above" && r.bottom + pad + 48 < vh) { arrow.className = "tour-arrow up"; arrow.style.top = r.bottom + pad + 8 + "px"; }
+      else if (r.top - pad - 48 > 4) { arrow.className = "tour-arrow down"; arrow.style.top = r.top - pad - 48 + "px"; }
+      else { arrow.className = "tour-arrow up"; arrow.style.top = Math.min(r.bottom + pad + 8, vh - 48) + "px"; }
+      arrow.style.left = ax + "px";
+    }
+
+    // ------------------------------------------------------------ typing demo (never saved)
+    function typeDemo(el, text) {
+      if (!el || !("value" in el)) return;
+      const original = el.value;
+      let i = 0, timer = 0;
+      el.classList.add("tour-typing");
+      el.value = "";
+      demo = { el, original, stop: () => clearInterval(timer) };
+      if (REDUCED) { el.value = text; return; }
+      timer = setInterval(() => {
+        el.value = text.slice(0, ++i);
+        if (i >= text.length) clearInterval(timer);
+      }, 65);
+    }
+
+    function undoDemo() {
+      if (!demo) return;
+      demo.stop();
+      demo.el.value = demo.original;
+      demo.el.classList.remove("tour-typing");
+      demo = null;
+    }
+
+    function seen(which) { try { return localStorage.getItem("tourSeen_" + which) === "1"; } catch (e) { return true; } }
+
+    return {
+      start,
+      end,
+      /** Auto-start a tour the first time; force=true picks the right tour for what's on screen. */
+      maybeAuto(which) { if (!active && !seen(which)) start(which); },
+      startAuto() { start(document.querySelector("#ship-modal.open") ? "shipment" : "main"); },
+    };
+  })();
+  </script>
+</body>
+</html>

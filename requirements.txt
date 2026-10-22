@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic[email]
+aiosmtplib
+python-multipart
+python-dotenv
+jinja2
+passlib[bcrypt]
+# passlib 1.7.4 is incompatible with bcrypt>=4.1 (its backend self-test fails)
+bcrypt==4.0.1
+itsdangerous
+httpx

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About us</title>
+  <meta name="description" content="Who we are, what we deliver and how to reach us.">
+  <meta name="theme-color" content="#0b1f52">
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/main.css" id="main-css">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js" defer></script>
+</head>
+<body>
+  <div id="progress-bar" aria-hidden="true"></div>
+
+  <div class="alert-bar">
+    <div class="container">
+      <span class="ab-pill">Update</span>
+      <span class="ab-text">Tracking is available 24/7. Have a question about a delivery? <a href="/#faq">Read the FAQ</a> or contact our team.</span>
+      <span class="ab-right"><a data-phone-link href="#" hidden><i data-lucide="phone"></i> <span data-phone></span></a></span>
+    </div>
+  </div>
+
+  <header class="nav" id="nav">
+    <div class="container">
+      <a href="/" class="logo">
+        <img src="/static/img/logo.png" alt="" onerror="this.hidden=true;this.nextElementSibling.hidden=false">
+        <span class="logo-mark" hidden data-abbr></span>
+        <span class="logo-text"><span data-brand></span><small>Shipment tracking</small></span>
+      </a>
+      <nav class="nav-links" aria-label="Main">
+        <a href="/#track" class="nav-track"><i data-lucide="scan-search"></i> Track</a>
+        <a href="#services">Services</a>
+        <a href="/about" class="active">About</a>
+        <a href="/#faq">Help</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <div class="nav-right">
+        <form class="nav-track-form" onsubmit="return goTrack(event, this)" role="search">
+          <label class="sr-only" for="nav-tn">Tracking number</label>
+          <input id="nav-tn" name="tn" placeholder="Tracking number" autocomplete="off">
+          <button type="submit" aria-label="Track"><i data-lucide="arrow-right"></i></button>
+        </form>
+        <span data-account-slot></span>
+        <button class="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="menu-backdrop"></div>
+  <aside class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mm-head">
+      <span class="logo"><span class="logo-mark" data-abbr></span><span class="logo-text" data-brand></span></span>
+      <button class="mm-close" data-close-menu aria-label="Close menu"><i data-lucide="x"></i></button>
+    </div>
+    <form class="track-box light mm-track" onsubmit="return goTrack(event, this)">
+      <input name="tn" placeholder="Enter tracking number" autocomplete="off" aria-label="Tracking number">
+      <button class="btn btn-primary btn-sm" type="submit">Track</button>
+    </form>
+    <a class="mm-link" href="/"><i data-lucide="home"></i> Home</a>
+    <a class="mm-link" href="/#track"><i data-lucide="scan-search"></i> Track a parcel</a>
+    <a class="mm-link" href="/about"><i data-lucide="building-2"></i> About</a>
+    <a class="mm-link" href="#services"><i data-lucide="layers"></i> Services</a>
+    <a class="mm-link" href="#contact"><i data-lucide="message-circle"></i> Contact</a>
+    <div class="mm-foot">
+      <a href="/dashboard" class="btn btn-primary btn-block"><i data-lucide="user-round"></i> My account</a>
+    </div>
+  </aside>
+
+  <main>
+    <section class="page-hero">
+      <div class="container" style="position:relative;z-index:1">
+        <span class="eyebrow">About us</span>
+        <h1>Moving parcels — and information — <br>honestly and on time.</h1>
+        <p><span data-brand></span> is an independent courier and logistics company delivering documents, parcels and freight by road, sea and air, with clear tracking at every step.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+          <a href="/#track" class="btn btn-primary btn-lg"><i data-lucide="scan-search"></i> Track a shipment</a>
+          <a href="#contact" class="btn btn-ghost btn-lg">Contact us</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- story -->
+    <section class="section">
+      <div class="container split">
+        <div class="reveal">
+          <span class="eyebrow">Our story</span>
+          <h2>Built for people who just want to know where their parcel is</h2>
+          <p class="muted">We started <span data-brand></span><span data-founded-in></span> with a simple idea: tracking should be easy to read and never leave you guessing. Every shipment we handle gets its own tracking page with a map, a step-by-step progress bar and a complete checkpoint history entered by our operations team.</p>
+          <p class="muted">Today we serve individuals and businesses with domestic road delivery, express air, ocean freight and customs support — and we still answer the phone ourselves.</p>
+        </div>
+        <div class="about-media reveal">
+          <img src="/static/img/about-handover.jpg" alt="A courier handing a parcel to a customer" loading="lazy">
+          <div class="float-card"><i data-lucide="badge-check"></i><div><strong>Real people, real checkpoints</strong><div class="small muted">Every update is entered by our team</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- stats -->
+    <section class="stat-band">
+      <div class="container">
+        <div class="grid-4">
+          <div class="stat reveal"><div class="num" data-count="50" data-suffix="K+">0</div><div class="label">Parcels delivered</div></div>
+          <div class="stat reveal"><div class="num" data-count="120" data-suffix="+">0</div><div class="label">Countries served</div></div>
+          <div class="stat reveal"><div class="num" data-count="99" data-suffix="%">0</div><div class="label">On-time delivery</div></div>
+          <div class="stat reveal"><div class="num">24/7</div><div class="label">Support</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- services -->
+    <section class="section alt" id="services">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Services</span>
+          <h2>What we deliver</h2>
+          <p>One tracking experience across every service.</p>
+        </div>
+        <div class="grid-3 stagger">
+          <div class="card card-hover service-card"><div class="icon-tile"><i data-lucide="truck"></i></div><h3>Domestic road delivery</h3><p>Door-to-door ground delivery across the country, with hub-by-hub scans and scheduled route maps.</p></div>
+          <div class="card card-hover service-card"><div class="icon-tile"><i data-lucide="plane"></i></div><h3>Express air</h3><p>Priority handling for urgent documents and parcels on the fastest available routes.</p></div>
+          <div class="card card-hover service-card"><div class="icon-tile"><i data-lucide="ship"></i></div><h3>Ocean freight</h3><p>Consolidated sea freight for heavier and bulkier consignments at a lower cost per kilo.</p></div>
+          <div class="card card-hover service-card"><div class="icon-tile accent"><i data-lucide="file-check-2"></i></div><h3>Customs clearance</h3><p>Guidance on commercial invoices and declarations so international parcels clear borders smoothly. Any official duties are assessed by the destination country's customs authority.</p></div>
+          <div class="card card-hover service-card"><div class="icon-tile"><i data-lucide="warehouse"></i></div><h3>Warehousing</h3><p>Secure short-term storage and consolidation at partner hubs.</p></div>
+          <div class="card card-hover service-card"><div class="icon-tile"><i data-lucide="building-2"></i></div><h3>Business accounts</h3><p>Scheduled collections and a single dashboard for every parcel your team sends.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- values -->
+    <section class="section" id="values">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Our values</span>
+          <h2>What you can expect from us</h2>
+        </div>
+        <div class="grid-4 stagger">
+          <div class="card card-hover"><div class="icon-tile"><i data-lucide="eye"></i></div><h3>Transparency</h3><p class="muted small" style="margin:0">Checkpoints are the source of truth. Map markers show the scheduled position and are labelled that way.</p></div>
+          <div class="card card-hover"><div class="icon-tile"><i data-lucide="shield-check"></i></div><h3>Care</h3><p class="muted small" style="margin:0">Parcels are handled, stored and delivered as if they were our own.</p></div>
+          <div class="card card-hover"><div class="icon-tile"><i data-lucide="timer"></i></div><h3>Reliability</h3><p class="muted small" style="margin:0">Realistic delivery estimates, and we tell you early if something changes.</p></div>
+          <div class="card card-hover"><div class="icon-tile accent"><i data-lucide="heart-handshake"></i></div><h3>Service</h3><p class="muted small" style="margin:0">Friendly people on the phone, by text and by email — any time of day.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- contact -->
+    <section class="section alt" id="contact">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Contact</span>
+          <h2>We're here to help</h2>
+          <p>Have your tracking number ready so we can help faster.</p>
+        </div>
+        <div class="grid-3 stagger">
+          <a class="card card-hover" data-phone-link href="#" style="color:inherit"><div class="icon-tile"><i data-lucide="phone"></i></div><h3>Call us</h3><p class="muted" style="margin:0" data-phone>—</p></a>
+          <a class="card card-hover" data-sms-link href="#" style="color:inherit"><div class="icon-tile"><i data-lucide="message-square-text"></i></div><h3>Text us</h3><p class="muted" style="margin:0">Calls &amp; texts: <span data-phone>—</span></p></a>
+          <a class="card card-hover" data-email-link href="#" style="color:inherit"><div class="icon-tile accent"><i data-lucide="mail"></i></div><h3>Email</h3><p class="muted" style="margin:0;overflow-wrap:anywhere" data-email>—</p></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="f-grid">
+        <div>
+          <a href="/" class="logo"><span class="logo-mark" data-abbr></span><span class="logo-text"><span data-brand></span><small>Shipment tracking</small></span></a>
+          <p>Reliable domestic and international delivery with transparent, checkpoint-by-checkpoint tracking — around the clock.</p>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <ul><li><a href="/about">About us</a></li><li><a href="#services">Services</a></li><li><a href="/register">Create an account</a></li></ul>
+        </div>
+        <div>
+          <h4>Support</h4>
+          <ul><li><a href="/#track">Track a parcel</a></li><li><a href="/dashboard">My shipments</a></li><li><a href="#contact">Contact</a></li></ul>
+        </div>
+        <div>
+          <h4>Get in touch</h4>
+          <div class="contact-line"><i data-lucide="phone"></i><a data-phone-link href="#"><span data-phone></span></a></div>
+          <div class="contact-line"><i data-lucide="message-square-text"></i><a data-sms-link href="#">Text <span data-phone></span></a></div>
+          <div class="contact-line"><i data-lucide="mail"></i><a data-email-link href="#"><span data-email></span></a></div>
+          <form class="f-track" onsubmit="return goTrack(event, this)">
+            <input name="tn" placeholder="Tracking number" aria-label="Tracking number" autocomplete="off">
+            <button class="btn btn-accent btn-sm" type="submit">Track</button>
+          </form>
+        </div>
+      </div>
+      <div class="disclaimer"><i data-lucide="info"></i><span data-disclaimer></span></div>
+      <div class="copyright"><span>&copy; <span data-years></span> <span data-brand></span>. All rights reserved.</span><span>Map data &copy; OpenStreetMap contributors</span></div>
+    </div>
+  </footer>
+
+  <div class="toast-wrap" aria-live="polite"></div>
+  <script src="/static/js/main.js"></script>
+  <script>
+  (async function () {
+    const setText = (sel, val) => document.querySelectorAll(sel).forEach((el) => { el.textContent = val; });
+    try {
+      const cfg = await apiJSON("/api/config");
+      setText("[data-brand]", cfg.name);
+      setText("[data-abbr]", cfg.abbr);
+      setText("[data-disclaimer]", cfg.disclaimer);
+      setText("[data-phone]", cfg.phone || "—");
+      const yr = cfg.current_year || new Date().getFullYear();
+      setText("[data-years]", cfg.founded && +cfg.founded < yr ? cfg.founded + "–" + yr : String(yr));
+      setText("[data-founded-in]", cfg.founded ? " in " + cfg.founded : "");
+      setText("[data-email]", cfg.email || "—");
+      document.title = "About us — " + cfg.name;
+      if (cfg.smartsupp_key && !window.smartsupp) {
+        window._smartsupp = { key: cfg.smartsupp_key };
+        (function (d) {
+          var o = window.smartsupp = function () { o._.push(arguments); }; o._ = [];
+          var c = d.createElement("script"); c.async = true; c.charset = "utf-8";
+          c.src = "https://www.smartsuppchat.com/loader.js?"; d.head.appendChild(c);
+        })(document);
+        document.body.classList.add("has-chat");
+      }
+      document.querySelectorAll("[data-phone-link]").forEach((a) => { if (cfg.phone) { a.href = "tel:" + cfg.phone_tel; a.hidden = false; } });
+      document.querySelectorAll("[data-sms-link]").forEach((a) => { if (cfg.phone_tel) a.href = "sms:" + cfg.phone_tel; else a.hidden = true; });
+      document.querySelectorAll("[data-email-link]").forEach((a) => { if (cfg.email) a.href = "mailto:" + cfg.email; });
+    } catch (e) { /* page still works without branding */ }
+    try {
+      const me = await apiJSON("/api/customer/me");
+      const slot = document.querySelector("[data-account-slot]");
+      slot.innerHTML = me.authenticated
+        ? '<a href="/dashboard" class="btn btn-ghost btn-sm">Hi ' + esc(me.customer.first_name) + '</a>'
+        : '<a href="/login" class="btn btn-dark btn-sm"><i data-lucide="user-round"></i> Sign in</a>';
+      refreshIcons();
+    } catch (e) { /* ignore */ }
+  })();
+  </script>
+</body>
+</html>

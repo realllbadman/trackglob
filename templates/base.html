@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ business.name }} — Track your shipment{% endblock %}</title>
+  <meta name="description" content="{% block description %}Track any shipment with {{ business.name }}: delivery estimate, route map and full checkpoint history for domestic and international parcels.{% endblock %}">
+  <meta name="theme-color" content="#062925">
+  <link rel="icon" type="image/png" href="/static/img/favicon.png?v={{ asset_version }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  {% block head_extra %}{% endblock %}
+  <link rel="stylesheet" href="/static/css/main.css?v={{ asset_version }}">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js" defer></script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <div id="progress-bar" aria-hidden="true"></div>
+  <div id="preloader" aria-hidden="true">
+    <div class="pl-inner"><div class="pl-box">{{ business.abbr }}</div><div class="pl-bar"></div></div>
+  </div>
+
+  <div class="alert-bar no-print" role="region" aria-label="Service update">
+    <div class="container">
+      <span class="ab-pill">Update</span>
+      <span class="ab-text">Tracking is available 24/7. Have a question about a delivery? <a href="/#faq">Read the FAQ</a> or contact our team.</span>
+      <span class="ab-right">
+        {% if business.phone %}<a href="tel:{{ business.phone_tel }}"><i data-lucide="phone"></i> {{ business.phone }}</a><a href="sms:{{ business.phone_tel }}"><i data-lucide="message-square-text"></i> Text us</a>{% endif %}
+        {% if business.whatsapp %}<a href="https://wa.me/{{ whatsapp_digits }}" target="_blank" rel="noopener"><i data-lucide="message-circle"></i> WhatsApp</a>{% endif %}
+      </span>
+    </div>
+  </div>
+
+  {% set nav_active = nav_active|default('') %}
+  <header class="nav" id="nav">
+    <div class="container">
+      <a href="/" class="logo" aria-label="{{ business.name }} home">
+        <img src="/static/img/logo.png?v={{ asset_version }}" alt="" onerror="this.hidden=true;this.nextElementSibling.hidden=false">
+        <span class="logo-mark" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg></span>
+        <span class="logo-text">{{ business.name }}<small>{% if business.founded %}Since {{ business.founded }}{% else %}Shipment tracking{% endif %}</small></span>
+      </a>
+      <nav class="nav-links" aria-label="Main">
+        <a href="/#track" class="nav-track {{ 'active' if nav_active == 'track' }}"><i data-lucide="scan-search"></i> Track</a>
+        <a href="/#services">Services</a>
+        <a href="/about" class="{{ 'active' if nav_active == 'about' }}">About</a>
+        <a href="/#faq">Help</a>
+        <a href="/#contact">Contact</a>
+      </nav>
+      <div class="nav-right">
+        <form class="nav-track-form" onsubmit="return goTrack(event, this)" role="search">
+          <label class="sr-only" for="nav-tn">Tracking number</label>
+          <input id="nav-tn" name="tn" placeholder="Tracking number" autocomplete="off" spellcheck="false">
+          <button type="submit" aria-label="Track"><i data-lucide="arrow-right"></i></button>
+        </form>
+        {% if current_customer %}
+          <div class="nav-user">
+            <a href="/dashboard" class="avatar" title="My shipments">{{ current_customer.first_name[:1]|upper }}</a>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="logout()">Log out</button>
+        {% else %}
+          <a href="/login" class="btn btn-dark btn-sm"><i data-lucide="user-round"></i> Sign in</a>
+        {% endif %}
+        <button class="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="menu-backdrop"></div>
+  <aside class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mm-head">
+      <span class="logo"><span class="logo-mark">{{ business.abbr }}</span><span class="logo-text">{{ business.name }}</span></span>
+      <button class="mm-close" data-close-menu aria-label="Close menu"><i data-lucide="x"></i></button>
+    </div>
+    <form class="track-box light mm-track" onsubmit="return goTrack(event, this)">
+      <input name="tn" placeholder="Tracking number" autocomplete="off" aria-label="Tracking number">
+      <button class="btn btn-primary btn-sm" type="submit">Track</button>
+    </form>
+    <a class="mm-link" href="/#track"><i data-lucide="scan-search"></i> Track a shipment</a>
+    <a class="mm-link" href="/#services"><i data-lucide="layers"></i> Services</a>
+    <a class="mm-link" href="/about"><i data-lucide="building-2"></i> About</a>
+    <a class="mm-link" href="/#faq"><i data-lucide="life-buoy"></i> Help &amp; FAQ</a>
+    <a class="mm-link" href="/#contact"><i data-lucide="message-circle"></i> Contact</a>
+    <div class="mm-foot">
+      {% if current_customer %}
+        <a href="/dashboard" class="btn btn-primary btn-block"><i data-lucide="layout-dashboard"></i> My shipments</a>
+        <button class="btn btn-ghost btn-block" onclick="logout()">Log out</button>
+      {% else %}
+        <a href="/login" class="btn btn-dark btn-block"><i data-lucide="log-in"></i> Sign in</a>
+        <a href="/register" class="btn btn-ghost btn-block">Create account</a>
+      {% endif %}
+    </div>
+  </aside>
+
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer" id="contact">
+    <div class="container">
+      <div class="f-top">
+        <div>
+          <h3>Track a shipment</h3>
+          <p>Enter your tracking number to see its status, delivery estimate and history.</p>
+        </div>
+        <form class="f-track" onsubmit="return goTrack(event, this)">
+          <input name="tn" placeholder="Tracking number" aria-label="Tracking number" autocomplete="off">
+          <button class="btn btn-accent btn-sm" type="submit">Track</button>
+        </form>
+      </div>
+      <div class="f-grid">
+        <div>
+          <a href="/" class="logo">
+            <span class="logo-mark">{{ business.abbr }}</span>
+            <span class="logo-text">{{ business.name }}<small>Shipment tracking</small></span>
+          </a>
+          <p>Domestic and international delivery with clear, checkpoint-by-checkpoint tracking{% if business.founded %} — since {{ business.founded }}{% endif %}.</p>
+          <div class="socials">
+            <a href="#" aria-label="Facebook"><i data-lucide="facebook"></i></a>
+            <a href="#" aria-label="Instagram"><i data-lucide="instagram"></i></a>
+            <a href="#" aria-label="LinkedIn"><i data-lucide="linkedin"></i></a>
+          </div>
+        </div>
+        <div>
+          <h4>Shipping</h4>
+          <ul>
+            <li><a href="/#track">Track a shipment</a></li>
+            <li><a href="/#services">Services</a></li>
+            <li><a href="/#how">How it works</a></li>
+            <li><a href="/dashboard">My shipments</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <ul>
+            <li><a href="/about">About us</a></li>
+            <li><a href="/about#values">Our commitments</a></li>
+            <li><a href="/#faq">Help &amp; FAQ</a></li>
+            <li><a href="/register">Create an account</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Contact</h4>
+          {% if business.phone %}<div class="contact-line"><i data-lucide="phone"></i><span><a href="tel:{{ business.phone_tel }}">{{ business.phone }}</a><br><span class="small">Calls &amp; texts · <a href="sms:{{ business.phone_tel }}">Send a text</a></span></span></div>{% endif %}
+          {% if business.whatsapp %}<div class="contact-line"><i data-lucide="message-circle"></i><a href="https://wa.me/{{ whatsapp_digits }}" target="_blank" rel="noopener">WhatsApp {{ business.whatsapp }}</a></div>{% endif %}
+          {% if business.email %}<div class="contact-line"><i data-lucide="mail"></i><a href="mailto:{{ business.email }}">{{ business.email }}</a></div>{% endif %}
+          <div class="contact-line"><i data-lucide="clock-3"></i><span>Support available 24/7</span></div>
+        </div>
+      </div>
+      <div class="disclaimer"><i data-lucide="info"></i><span>{{ business.disclaimer }}</span></div>
+      <div class="copyright">
+        <span>&copy; {% if business.founded and business.founded|int < current_year %}{{ business.founded }}–{% endif %}{{ current_year }} {{ business.name }}. All rights reserved.</span>
+        <span>Map data &copy; OpenStreetMap contributors</span>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast-wrap" aria-live="polite"></div>
+  <script src="/static/js/main.js?v={{ asset_version }}"></script>
+  {% block scripts %}{% endblock %}
+  {% if smartsupp_key %}
+  <!-- Smartsupp Live Chat -->
+  <script>
+    var _smartsupp = _smartsupp || {};
+    _smartsupp.key = {{ smartsupp_key|tojson }};
+    window.smartsupp || (function (d) {
+      var s, c, o = smartsupp = function () { o._.push(arguments); }; o._ = [];
+      s = d.getElementsByTagName("script")[0]; c = d.createElement("script");
+      c.type = "text/javascript"; c.charset = "utf-8"; c.async = true;
+      c.src = "https://www.smartsuppchat.com/loader.js?"; s.parentNode.insertBefore(c, s);
+    })(document);
+    document.body.classList.add("has-chat");
+  </script>
+  <noscript>Powered by <a href="https://www.smartsupp.com" target="_blank" rel="noopener">Smartsupp</a></noscript>
+  {% endif %}
+</body>
+</html>

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Create account — {{ business.name }}{% endblock %}
+{% block content %}
+<section class="auth-wrap">
+  <div class="container">
+    <div class="auth-card reveal" style="margin:0 auto">
+      <aside class="auth-aside">
+        <span class="eyebrow" style="color:#fdba74">Free account</span>
+        <h2>Track smarter with {{ business.name }}.</h2>
+        <p>It takes less than a minute and it's free.</p>
+        <ul>
+          <li><span class="ic"><i data-lucide="layout-dashboard"></i></span><div><strong>One dashboard</strong><span>All your incoming parcels at a glance.</span></div></li>
+          <li><span class="ic"><i data-lucide="mail-check"></i></span><div><strong>Instant alerts</strong><span>Emails when a status changes.</span></div></li>
+          <li><span class="ic"><i data-lucide="shield-check"></i></span><div><strong>Private &amp; secure</strong><span>Your details are never shared.</span></div></li>
+        </ul>
+      </aside>
+      <div class="auth-form">
+        <h1>Create your account</h1>
+        <p class="muted">Use the email address that shipments are sent to.</p>
+        <div class="form-error" id="err" role="alert"></div>
+        <form id="reg-form" novalidate>
+          <div class="form-row">
+            <div class="field"><label for="first_name">First name</label>
+              <div class="input-icon"><i data-lucide="user-round"></i><input id="first_name" autocomplete="given-name" required></div></div>
+            <div class="field"><label for="last_name">Last name</label>
+              <div class="input-icon"><i data-lucide="user-round"></i><input id="last_name" autocomplete="family-name" required></div></div>
+          </div>
+          <div class="field"><label for="email">Email</label>
+            <div class="input-icon"><i data-lucide="mail"></i><input id="email" type="email" autocomplete="email" required></div></div>
+          <div class="field"><label for="phone">Phone <span class="muted small">(optional)</span></label>
+            <div class="input-icon"><i data-lucide="phone"></i><input id="phone" type="tel" autocomplete="tel"></div></div>
+          <div class="form-row">
+            <div class="field"><label for="password">Password</label>
+              <div class="input-icon"><i data-lucide="lock"></i><input id="password" type="password" autocomplete="new-password" minlength="8" required>
+                <button type="button" class="toggle-pw" aria-label="Show password"><i data-lucide="eye"></i></button></div>
+              <span class="hint">At least 8 characters</span></div>
+            <div class="field"><label for="confirm">Confirm password</label>
+              <div class="input-icon"><i data-lucide="lock-keyhole"></i><input id="confirm" type="password" autocomplete="new-password" required>
+                <button type="button" class="toggle-pw" aria-label="Show password"><i data-lucide="eye"></i></button></div></div>
+          </div>
+          <button class="btn btn-primary btn-block btn-lg" type="submit" id="submit-btn">Create account <i data-lucide="arrow-right"></i></button>
+        </form>
+        <p class="small muted center" style="margin-top:18px">Already have an account? <a href="/login">Log in</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById("reg-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const err = document.getElementById("err");
+  const btn = document.getElementById("submit-btn");
+  const v = (id) => document.getElementById(id).value.trim();
+  const fail = (msg) => { err.textContent = msg; err.classList.add("show"); };
+  err.classList.remove("show");
+  const body = { first_name: v("first_name"), last_name: v("last_name"), email: v("email"), phone: v("phone") || null, password: document.getElementById("password").value };
+  if (!body.first_name || !body.last_name) return fail("Please enter your first and last name.");
+  if (!/^\S+@\S+\.\S+$/.test(body.email)) return fail("Please enter a valid email address.");
+  if (body.password.length < 8) return fail("Password must be at least 8 characters.");
+  if (body.password !== document.getElementById("confirm").value) return fail("Passwords don't match.");
+  btn.disabled = true;
+  try {
+    await apiJSON("/api/customer/register", { method: "POST", body });
+    window.location.href = "/dashboard";
+  } catch (ex) {
+    fail(ex.message);
+    btn.disabled = false;
+  }
+});
+</script>
+{% endblock %}

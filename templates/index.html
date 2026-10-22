@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% set nav_active = 'track' %}
+{% set tn_placeholder = 'e.g. ' ~ business.tracking_prefix ~ '0000000042' %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+{% endblock %}
+
+{% macro track_panel() -%}
+<div class="track-panel" id="track-panel">
+  <div class="tp-tabs" role="tablist" aria-label="Tracking options">
+    <button type="button" class="active" role="tab" aria-selected="true" aria-controls="tp-single" id="tab-single"><i data-lucide="package-search"></i> Tracking number</button>
+    <button type="button" role="tab" aria-selected="false" aria-controls="tp-multi" id="tab-multi"><i data-lucide="list"></i> Track multiple</button>
+  </div>
+  <div class="tp-body">
+    <div id="tp-single" role="tabpanel" aria-labelledby="tab-single">
+      <form class="track-box" onsubmit="return goTrack(event, this)" role="search">
+        <span class="tb-icon"><i data-lucide="scan-barcode"></i></span>
+        <label class="sr-only" for="hero-tn">Tracking number</label>
+        <input id="hero-tn" name="tn" placeholder="{{ tn_placeholder }}" autocomplete="off" spellcheck="false" autocapitalize="characters">
+        <button class="btn btn-primary" type="submit">Track <i data-lucide="arrow-right"></i></button>
+      </form>
+    </div>
+    <div id="tp-multi" role="tabpanel" aria-labelledby="tab-multi" hidden>
+      <form class="track-multi" onsubmit="return goTrackMulti(event, this)">
+        <label class="sr-only" for="hero-tns">Tracking numbers</label>
+        <textarea id="hero-tns" name="tns" placeholder="Enter up to 10 tracking numbers — one per line, or separated by commas" spellcheck="false"></textarea>
+        <div class="tm-foot"><span id="tm-count">0 / 10 numbers</span><button class="btn btn-primary" type="submit">Track all <i data-lucide="arrow-right"></i></button></div>
+      </form>
+    </div>
+    <div class="recent-chips" data-recent hidden></div>
+    <div class="tp-help">
+      <details>
+        <summary><i data-lucide="help-circle"></i> Where do I find my tracking number?</summary>
+        <p>It's in the shipment confirmation email we sent to the receiver, and on the shipping receipt. It starts with <strong class="mono">{{ business.tracking_prefix }}</strong> followed by 10 digits.</p>
+      </details>
+    </div>
+  </div>
+</div>
+{%- endmacro %}
+
+{% block content %}
+{% if current_customer %}
+<!-- ============================================ personalised hero -->
+<section class="hero hero-personal" id="track">
+  <div class="container hero-grid">
+    <div>
+      <span class="eyebrow">Your account</span>
+      <h1>Welcome back, <span class="hl">{{ current_customer.first_name }}</span></h1>
+      <p class="lead">Track any shipment below, or open your dashboard to see everything addressed to you.</p>
+      {{ track_panel() }}
+    </div>
+  </div>
+</section>
+{% else %}
+<!-- ============================================ hero -->
+<section class="hero" id="track">
+  <div class="container hero-grid">
+    <div>
+      <span class="eyebrow">Shipment tracking</span>
+      <h1>Know exactly where your <span class="hl">shipment</span> is.</h1>
+      <p class="lead">Delivery estimate, route map and every checkpoint, from pickup to doorstep. No account needed.</p>
+      {{ track_panel() }}
+      <div class="hero-meta">
+        <span><i data-lucide="check-circle-2"></i> Domestic &amp; international</span>
+        <span><i data-lucide="check-circle-2"></i> Email alerts on every update</span>
+        <span><i data-lucide="check-circle-2"></i> {% if business.founded %}Trusted since {{ business.founded }}{% else %}Support 24/7{% endif %}</span>
+      </div>
+    </div>
+
+    <div class="hero-media-wrap" aria-hidden="true">
+      <div class="hero-media">
+        <div class="hero-slide active"><div class="hero-slide-bg"><img src="/static/img/hero-plane.jpg?v={{ asset_version }}" alt="" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1400&q=70&auto=format&fit=crop'"></div></div>
+        <div class="hero-slide"><div class="hero-slide-bg"><img src="/static/img/hero-ship.jpg?v={{ asset_version }}" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?w=1400&q=70&auto=format&fit=crop'"></div></div>
+        <div class="hero-slide"><div class="hero-slide-bg"><img src="/static/img/hero-truck.jpg?v={{ asset_version }}" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1519003722824-194d4455a60c?w=1400&q=70&auto=format&fit=crop'"></div></div>
+        <div class="hero-caption">
+          <div>
+            <div class="hero-text active"><div class="hc-kicker">Express air</div><div class="hc-title">Priority handling for urgent parcels</div></div>
+            <div class="hero-text"><div class="hc-kicker">Ocean freight</div><div class="hc-title">Consolidated sea freight to 120+ countries</div></div>
+            <div class="hero-text"><div class="hc-kicker">Road network</div><div class="hc-title">Door-to-door delivery, hub by hub</div></div>
+          </div>
+          <div class="hero-dots" role="tablist" aria-label="Hero slides">
+            <button class="active" role="tab" aria-selected="true" aria-label="Slide 1"></button>
+            <button role="tab" aria-selected="false" aria-label="Slide 2"></button>
+            <button role="tab" aria-selected="false" aria-label="Slide 3"></button>
+          </div>
+        </div>
+      </div>
+      <div class="hero-chip c1"><span class="ex">Example</span><span class="hcp-ic"><i data-lucide="truck"></i></span><div><strong>In transit</strong><span>Arriving Thursday</span></div></div>
+      <div class="hero-chip c2"><span class="ex">Example</span><span class="hcp-ic"><i data-lucide="package-check"></i></span><div><strong>Delivered</strong><span>Signed for at 14:32</span></div></div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ============================================ quick tiles -->
+<div class="container">
+  <div class="quick-tiles stagger">
+    <a class="qt" href="#track" data-focus-track><span class="icon-tile"><i data-lucide="scan-search"></i></span><div><strong>Track a shipment</strong><span>Status, ETA and history</span></div><i data-lucide="chevron-right" class="qt-arrow"></i></a>
+    <a class="qt" href="{{ '/dashboard' if current_customer else '/register' }}"><span class="icon-tile"><i data-lucide="bell-ring"></i></span><div><strong>Get delivery alerts</strong><span>{{ 'Manage your shipments' if current_customer else 'Free account, email updates' }}</span></div><i data-lucide="chevron-right" class="qt-arrow"></i></a>
+    <a class="qt" href="#faq"><span class="icon-tile"><i data-lucide="file-check-2"></i></span><div><strong>Customs help</strong><span>What "held at customs" means</span></div><i data-lucide="chevron-right" class="qt-arrow"></i></a>
+    <a class="qt" href="#contact"><span class="icon-tile accent"><i data-lucide="headset"></i></span><div><strong>Contact support</strong><span>Call or text {{ business.phone or "our team" }}</span></div><i data-lucide="chevron-right" class="qt-arrow"></i></a>
+  </div>
+</div>
+
+{% if current_customer %}
+<section class="section-sm" style="padding-bottom:0">
+  <div class="container">
+    <div class="card reveal">
+      <div class="panel-head">
+        <h2><i data-lucide="package"></i> Your shipments</h2>
+        <a href="/dashboard" class="link-arrow">View all <i data-lucide="arrow-right"></i></a>
+      </div>
+      <div id="my-ships"><div class="skeleton" style="min-height:90px"></div></div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ============================================ stats -->
+<section class="section-sm">
+  <div class="container">
+    <div class="stat-strip reveal">
+      <div class="stat"><div class="num" data-count="50" data-suffix="K+">0</div><div class="label">Parcels delivered</div></div>
+      <div class="stat"><div class="num" data-count="120" data-suffix="+">0</div><div class="label">Countries served</div></div>
+      <div class="stat"><div class="num" data-count="99" data-suffix="%">0</div><div class="label">On-time delivery</div></div>
+      <div class="stat"><div class="num">24/7</div><div class="label">Tracking &amp; support</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ live preview (sample data) -->
+<section class="section alt" id="preview">
+  <div class="container">
+    <div class="section-head-row reveal">
+      <div class="section-head">
+        <span class="eyebrow">What you'll see</span>
+        <h2>A tracking page that answers the question</h2>
+        <p>Every shipment gets a route map, delivery estimate and checkpoint history. This preview uses sample data.</p>
+      </div>
+      <a href="#track" class="btn btn-dark" data-focus-track>Track your shipment <i data-lucide="arrow-right"></i></a>
+    </div>
+    <div class="preview-wrap reveal">
+      <div class="preview-side">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px">
+          <span class="mono small muted">SAMPLE-0000</span>
+          <span class="live-tag"><span class="dot"></span> Live</span>
+        </div>
+        <div style="margin-bottom:18px" id="sample-badge"></div>
+        <ul class="timeline" id="sample-timeline"></ul>
+      </div>
+      <div class="preview-map">
+        <span class="sample-label">Sample shipment — demo data</span>
+        <div id="sample-map" class="map"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ how it works -->
+<section class="section" id="how">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">How it works</span>
+      <h2>From pickup to doorstep</h2>
+      <p>Every scan is recorded by our team and shows up on your tracking page within minutes.</p>
+    </div>
+    <div class="steps stagger">
+      <div class="step-card"><h3>Shipment registered</h3><p>The receiver gets an email with a unique tracking number.</p></div>
+      <div class="step-card"><h3>Picked up</h3><p>A courier collects the parcel and it's scanned into our network.</p></div>
+      <div class="step-card"><h3>In transit</h3><p>Follow each hub checkpoint and the scheduled route on the map.</p></div>
+      <div class="step-card"><h3>Delivered</h3><p>Handed over and signed for, with the final checkpoint recorded.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ services -->
+<section class="section alt" id="services">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">Services</span>
+      <h2>Shipping options for every kind of delivery</h2>
+      <p>Whatever you send, you get the same tracking page and proactive updates.</p>
+    </div>
+    <div class="bento stagger">
+      <div class="card service-card feature">
+        <div class="icon-tile"><i data-lucide="globe-2"></i></div>
+        <h3>International shipping</h3>
+        <p>Air and ocean freight to over 120 countries, with customs paperwork guidance and tracking across every border.</p>
+        <ul class="feature-list">
+          <li><i data-lucide="check"></i> Express air and consolidated ocean freight</li>
+          <li><i data-lucide="check"></i> Help preparing customs documents</li>
+          <li><i data-lucide="check"></i> One tracking number, door to door</li>
+        </ul>
+        <a class="more" href="/about#services">Learn more <i data-lucide="arrow-right"></i></a>
+      </div>
+      <div class="card card-hover service-card"><div class="icon-tile"><i data-lucide="truck"></i></div><h3>Domestic road delivery</h3><p>Reliable nationwide ground delivery with hub-by-hub checkpoints.</p><a class="more" href="/about#services">Learn more <i data-lucide="arrow-right"></i></a></div>
+      <div class="card card-hover service-card"><div class="icon-tile"><i data-lucide="zap"></i></div><h3>Express</h3><p>Priority handling and the fastest routes for urgent documents and parcels.</p><a class="more" href="/about#services">Learn more <i data-lucide="arrow-right"></i></a></div>
+      <div class="card card-hover service-card"><div class="icon-tile"><i data-lucide="warehouse"></i></div><h3>Warehousing</h3><p>Secure short-term storage and consolidation at partner hubs.</p><a class="more" href="/about#services">Learn more <i data-lucide="arrow-right"></i></a></div>
+      <div class="card card-hover service-card"><div class="icon-tile accent"><i data-lucide="building-2"></i></div><h3>Business shipping</h3><p>Scheduled collections and one dashboard for every outgoing parcel.</p><a class="more" href="/about#services">Learn more <i data-lucide="arrow-right"></i></a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ about teaser -->
+<section class="section">
+  <div class="container split">
+    <div class="about-media reveal">
+      <img src="/static/img/about-handover.jpg?v={{ asset_version }}" alt="A courier handing a parcel to a customer" loading="lazy">
+      <div class="float-card"><i data-lucide="badge-check"></i><div><strong>Signed &amp; delivered</strong><div class="small muted">Proof of delivery on every parcel</div></div></div>
+    </div>
+    <div class="reveal">
+      <span class="eyebrow">About {{ business.name }}{% if business.founded %} · Since {{ business.founded }}{% endif %}</span>
+      <h2>Tracking you can actually trust</h2>
+      <p class="muted">{% if business.founded %}Since {{ business.founded }}, {% endif %}{{ business.name }} {{ "has moved" if business.founded else "moves" }} documents, parcels and freight by road, sea and air. Every checkpoint is entered by our operations team and shown to you exactly as recorded.</p>
+      <ul class="check-list">
+        <li><i data-lucide="check-circle-2"></i><span>Checkpoints recorded by real people at real hubs</span></li>
+        <li><i data-lucide="check-circle-2"></i><span>The map shows the scheduled route — clearly labelled, never a fake GPS dot</span></li>
+        <li><i data-lucide="check-circle-2"></i><span>Call or text us around the clock</span></li>
+      </ul>
+      <a href="/about" class="btn btn-ghost">More about us <i data-lucide="arrow-right"></i></a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ FAQ -->
+<section class="section alt" id="faq">
+  <div class="container faq-grid">
+    <div class="reveal">
+      <span class="eyebrow">Help</span>
+      <h2>Frequently asked questions</h2>
+      <p class="muted">Can't find what you need? Our team is available 24/7.</p>
+      <a href="#contact" class="btn btn-dark" style="margin-top:8px"><i data-lucide="headset"></i> Contact support</a>
+    </div>
+    <div class="faq reveal">
+      <details>
+        <summary>Where do I find my tracking number?<span class="faq-ic"><i data-lucide="plus"></i></span></summary>
+        <p>It's in the confirmation email sent to the receiver when the shipment was registered, and on the shipping receipt. Numbers start with <strong class="mono">{{ business.tracking_prefix }}</strong> followed by 10 digits.</p>
+      </details>
+      <details>
+        <summary>Why hasn't my tracking updated?<span class="faq-ic"><i data-lucide="plus"></i></span></summary>
+        <p>Parcels are scanned at hubs, so there can be gaps of a day or more while a shipment is travelling between them — especially on international and ocean routes. The page refreshes automatically every 30 seconds.</p>
+      </details>
+      <details>
+        <summary>What does "Held at Customs" mean?<span class="faq-ic"><i data-lucide="plus"></i></span></summary>
+        <p>The destination country's customs authority is reviewing the parcel. This is a normal step for international shipments. Any official duties are assessed by that customs authority, not by us.</p>
+      </details>
+      <details>
+        <summary>Is the moving marker on the map live GPS?<span class="faq-ic"><i data-lucide="plus"></i></span></summary>
+        <p>No. The marker shows the scheduled position along the route set by our courier team, based on the planned departure and arrival times. The checkpoint history is the source of truth for where your parcel has been scanned.</p>
+      </details>
+      <details>
+        <summary>Will you ever ask me to pay to release a parcel?<span class="faq-ic"><i data-lucide="plus"></i></span></summary>
+        <p>No. We never ask for payment by text message, email link or phone call to release a parcel. If you receive a message like that, don't pay — contact us directly using the details on this site.</p>
+      </details>
+      <details>
+        <summary>How do I get email updates?<span class="faq-ic"><i data-lucide="plus"></i></span></summary>
+        <p>The receiver's email gets updates automatically. Create a free account to see every shipment addressed to you, follow others by tracking number, and choose which ones notify you.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ CTA + newsletter -->
+<section class="section">
+  <div class="container">
+    <div class="cta-band reveal">
+      <div>
+        <div class="cta-label">{{ 'Your dashboard' if current_customer else 'Free account' }}</div>
+        {% if current_customer %}
+          <h2>All your shipments in one place</h2>
+          <p>Follow any shipment by its tracking number and choose which ones send you email updates.</p>
+          <div class="cta-actions"><a href="/dashboard" class="btn btn-accent btn-lg"><i data-lucide="layout-dashboard"></i> Open dashboard</a></div>
+        {% else %}
+          <h2>Never miss a delivery update</h2>
+          <p>Shipments addressed to your email appear automatically. Follow others by number and get alerts in one place.</p>
+          <div class="cta-actions">
+            <a href="/register" class="btn btn-accent btn-lg">Create free account</a>
+            <a href="/login" class="btn btn-lg btn-outline-light">Sign in</a>
+          </div>
+        {% endif %}
+      </div>
+      <div>
+        <div class="cta-label">Service news</div>
+        <p style="margin-bottom:14px">Holiday cut-off dates, new routes and service changes. No spam.</p>
+        <form class="newsletter" onsubmit="return newsletterSubmit(event, this)">
+          <label class="sr-only" for="nl-email">Email address</label>
+          <input id="nl-email" type="email" placeholder="you@example.com" required autocomplete="email">
+          <button class="btn btn-accent" type="submit">Subscribe</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="/static/js/map.js?v={{ asset_version }}"></script>
+<script>
+(function () {
+  // ---- tracking panel tabs + multi-number counter
+  const tabs = { single: document.getElementById("tab-single"), multi: document.getElementById("tab-multi") };
+  function setTab(which) {
+    Object.entries(tabs).forEach(([k, b]) => {
+      const on = k === which;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+      document.getElementById("tp-" + k).hidden = !on;
+    });
+    const f = document.getElementById(which === "multi" ? "hero-tns" : "hero-tn");
+    if (f) f.focus({ preventScroll: true });
+  }
+  tabs.single.addEventListener("click", () => setTab("single"));
+  tabs.multi.addEventListener("click", () => setTab("multi"));
+  const ta = document.getElementById("hero-tns");
+  const counter = document.getElementById("tm-count");
+  ta.addEventListener("input", () => {
+    const n = parseTrackingList(ta.value).length;
+    counter.textContent = n + " / 10 numbers";
+    counter.style.color = n > 10 ? "var(--danger)" : "";
+  });
+  document.querySelectorAll("[data-focus-track]").forEach((a) => a.addEventListener("click", () => {
+    setTimeout(() => setTab("single"), 350);
+  }));
+
+  // ---- SAMPLE data, built client-side. Never a real shipment.
+  const H = 3600 * 1000, now = Date.now();
+  const iso = (ms) => new Date(ms).toISOString();
+  const route = [
+    [34.0522, -118.2437], [34.1083, -117.2898], [34.8958, -117.0173], [35.1983, -114.0530], [35.1983, -111.6513],
+    [35.0844, -106.6504], [35.2220, -101.8313], [35.4676, -97.5164], [36.1540, -95.9928], [37.2090, -93.2923],
+    [38.6270, -90.1994], [39.7684, -86.1581], [39.9612, -82.9988], [40.4406, -79.9959], [40.2732, -76.8867],
+    [40.7128, -74.0060],
+  ];
+  const events = [
+    { status: "Pending", location_name: "Los Angeles, CA", lat: 34.0522, lng: -118.2437, notes: "Shipment created (sample)", timestamp: iso(now - 40 * H) },
+    { status: "Picked Up", location_name: "Los Angeles, CA", lat: 34.0522, lng: -118.2437, notes: null, timestamp: iso(now - 34 * H) },
+    { status: "Departed Hub", location_name: "Los Angeles Sorting Centre", lat: 34.0522, lng: -118.2437, notes: null, timestamp: iso(now - 32 * H) },
+    { status: "Arrived at Hub", location_name: "Flagstaff, AZ", lat: 35.1983, lng: -111.6513, notes: "On schedule", timestamp: iso(now - 4 * H) },
+    { status: "In Transit", location_name: "Albuquerque, NM", lat: 35.0844, lng: -106.6504, notes: null, timestamp: iso(now - 1 * H) },
+  ];
+  document.getElementById("sample-badge").innerHTML = statusBadge("In Transit", true);
+  renderTimeline(document.getElementById("sample-timeline"), events);
+  initTrackingMap("sample-map", {
+    events,
+    current: { lat: 35.0844, lng: -106.6504, status: "In Transit" },
+    route_path: route,
+    journey: { start: iso(now - 32 * H), end: iso(now + 64 * H), state: "moving", paused_frac: null },
+    server_now: iso(now),
+    label: "Sample parcel",
+  });
+})();
+
+{% if current_customer %}
+(async function () {
+  const box = document.getElementById("my-ships");
+  try {
+    const rows = await apiJSON("/api/customer/shipments");
+    if (!rows.length) {
+      box.innerHTML = '<div class="empty-state" style="padding:24px"><div class="es-emoji">📦</div><p class="muted">No shipments yet. Parcels addressed to your email will appear here automatically.</p></div>';
+      return;
+    }
+    box.innerHTML = '<div class="table-wrap"><table class="dtable"><thead><tr><th>Tracking #</th><th>Receiver</th><th>Destination</th><th>Status</th><th></th></tr></thead><tbody>' +
+      rows.slice(0, 6).map((r) =>
+        "<tr><td class='mono'><strong>" + esc(r.tracking_number) + "</strong>" + (r.source === "followed" ? " <span class='tag'>Following</span>" : "") + "</td>" +
+        "<td>" + esc(r.receiver_name) + "</td><td>" + esc(r.destination || "—") + "</td><td>" + statusBadge(r.current_status, true) + "</td>" +
+        "<td><a class='btn btn-ghost btn-sm' href='/track/" + encodeURIComponent(r.tracking_number) + "'>Track →</a></td></tr>"
+      ).join("") + "</tbody></table></div>";
+  } catch (e) {
+    box.innerHTML = '<p class="muted">Could not load your shipments right now.</p>';
+  }
+})();
+{% endif %}
+</script>
+{% endblock %}

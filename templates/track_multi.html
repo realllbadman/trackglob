@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% set nav_active = 'track' %}
+{% block title %}Track multiple shipments — {{ business.name }}{% endblock %}
+{% block head_extra %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block content %}
+<section class="track-top">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><i data-lucide="chevron-right"></i><a href="/#track">Tracking</a><i data-lucide="chevron-right"></i><span>Multiple shipments</span></nav>
+    <div class="tt-row">
+      <div>
+        <div class="tt-label">Tracking results</div>
+        <h1 style="font-size:clamp(1.5rem,3vw,2rem);margin:0">{{ found }} of {{ rows|length }} shipments found</h1>
+      </div>
+      <form class="th-search no-print" onsubmit="return goTrack(event, this)" role="search">
+        <label class="sr-only" for="th-tn">Track another number</label>
+        <input id="th-tn" name="tn" placeholder="Track another number" autocomplete="off" spellcheck="false">
+        <button type="submit"><i data-lucide="search"></i> Track</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<div class="container track-body">
+  {% if truncated %}
+  <div class="issue-card" style="margin-bottom:20px"><div class="ic-icon"><i data-lucide="info"></i></div><div><h3>Showing the first 10</h3><p style="margin:0">You can track up to 10 numbers at a time.</p></div></div>
+  {% endif %}
+  <div class="multi-list">
+    {% for r in rows %}
+      {% if r.shipment %}
+        {% set s = r.shipment %}
+        <a class="multi-row" href="/track/{{ s.tracking_number }}">
+          <span class="mr-tn">{{ s.tracking_number }}</span>
+          <span class="mr-route">
+            <strong>{{ s.origin or '—' }} → {{ s.destination or '—' }}</strong><br>
+            {% if r.last %}Latest: {{ r.last.status }}{% if r.last.location_name %} · {{ r.last.location_name }}{% endif %}{% endif %}
+          </span>
+          <span class="mr-eta"><span data-badge="{{ s.current_status }}"></span><br>{% if s.estimated_delivery %}ETA {{ s.estimated_delivery }}{% endif %}</span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+      {% else %}
+        <div class="multi-row missing">
+          <span class="mr-tn">{{ r.tn }}</span>
+          <span class="mr-route">No shipment found with this number. Check it for typos.</span>
+          <span class="mr-eta"><span class="badge pending">Not found</span></span>
+          <span></span>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll("[data-badge]").forEach((el) => { el.outerHTML = statusBadge(el.dataset.badge, true); });
+</script>
+{% endblock %}

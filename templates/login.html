@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Log in — {{ business.name }}{% endblock %}
+{% block content %}
+<section class="auth-wrap">
+  <div class="container">
+    <div class="auth-card reveal" style="margin:0 auto">
+      <aside class="auth-aside">
+        <span class="eyebrow" style="color:#fdba74">My account</span>
+        <h2>Every parcel you're expecting, in one place.</h2>
+        <p>Log in to see shipments addressed to you and the ones you follow.</p>
+        <ul>
+          <li><span class="ic"><i data-lucide="package-search"></i></span><div><strong>Automatic linking</strong><span>Parcels sent to your email show up on their own.</span></div></li>
+          <li><span class="ic"><i data-lucide="bell-ring"></i></span><div><strong>Email updates</strong><span>Choose which shipments notify you.</span></div></li>
+          <li><span class="ic"><i data-lucide="bookmark-plus"></i></span><div><strong>Follow any shipment</strong><span>Add parcels by tracking number.</span></div></li>
+        </ul>
+      </aside>
+      <div class="auth-form">
+        <h1>Welcome back</h1>
+        <p class="muted">Log in to your {{ business.name }} account.</p>
+        {% if seed_demo %}
+        <div class="demo-hint"><strong>Demo:</strong> <span class="mono">demo@example.com</span> / <span class="mono">demo1234</span></div>
+        {% endif %}
+        <div class="form-error" id="err" role="alert"></div>
+        <form id="login-form" novalidate>
+          <div class="field">
+            <label for="email">Email</label>
+            <div class="input-icon"><i data-lucide="mail"></i><input id="email" name="email" type="email" autocomplete="email" required></div>
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="input-icon"><i data-lucide="lock"></i><input id="password" name="password" type="password" autocomplete="current-password" required>
+              <button type="button" class="toggle-pw" aria-label="Show password"><i data-lucide="eye"></i></button></div>
+          </div>
+          <button class="btn btn-primary btn-block btn-lg" type="submit" id="submit-btn">Log in <i data-lucide="arrow-right"></i></button>
+        </form>
+        <p class="small muted center" style="margin-top:18px">New here? <a href="/register">Create a free account</a></p>
+        <p class="small muted center">Forgot your password? <a href="/#contact">Contact support</a> and we'll reset it for you.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const err = document.getElementById("err");
+  const btn = document.getElementById("submit-btn");
+  err.classList.remove("show");
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  if (!email || !password) { err.textContent = "Please enter your email and password."; err.classList.add("show"); return; }
+  btn.disabled = true;
+  try {
+    await apiJSON("/api/customer/login", { method: "POST", body: { email, password } });
+    window.location.href = "/dashboard";
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.classList.add("show");
+    btn.disabled = false;
+  }
+});
+</script>
+{% endblock %}

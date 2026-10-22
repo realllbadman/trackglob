@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+{% set nav_active = 'track' %}
+{% block title %}{% if shipment %}{{ shipment.tracking_number }} · {{ shipment.current_status }}{% else %}Tracking number not found{% endif %} — {{ business.name }}{% endblock %}
+{% block description %}Track shipment {{ tn }} with {{ business.name }}.{% endblock %}
+{% block head_extra %}
+{% if shipment %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">{% endif %}
+<meta name="robots" content="noindex">
+{% endblock %}
+
+{% macro dash(v) %}{{ v if v not in (None, '') else '—' }}{% endmacro %}
+
+{% block content %}
+{% if not shipment %}
+<!-- ============================================ not found -->
+<section class="not-found">
+  <div class="container">
+    <div class="nf-emoji" aria-hidden="true">📭</div>
+    <h1 style="font-size:clamp(1.7rem,3.6vw,2.4rem)">We couldn't find that tracking number</h1>
+    <p class="muted">No shipment matches <strong class="mono">{{ tn or '—' }}</strong>. Check the number in your confirmation email and try again — tracking numbers look like <span class="mono">{{ business.tracking_prefix }}0000000042</span>.</p>
+    <form class="track-box" onsubmit="return goTrack(event, this)">
+      <span class="tb-icon"><i data-lucide="scan-barcode"></i></span>
+      <input name="tn" value="{{ tn }}" placeholder="Enter tracking number" autocomplete="off" aria-label="Tracking number" autofocus>
+      <button class="btn btn-primary" type="submit">Track again</button>
+    </form>
+    <p class="small muted">Still stuck? <a href="/#faq">Read the FAQ</a>, <a href="/#contact">contact support</a>{% if business.phone %} or call/text <a href="tel:{{ business.phone_tel }}">{{ business.phone }}</a>{% endif %}.</p>
+  </div>
+</section>
+{% else %}
+{% set s = shipment %}
+<!-- ============================================ top bar -->
+<section class="track-top">
+  <div class="container">
+    <nav class="breadcrumb no-print" aria-label="Breadcrumb"><a href="/">Home</a><i data-lucide="chevron-right"></i><a href="/#track">Tracking</a><i data-lucide="chevron-right"></i><span class="mono">{{ s.tracking_number }}</span></nav>
+    <div class="tt-row">
+      <div>
+        <div class="tt-label">Tracking number</div>
+        <div class="tt-tn">
+          <span>{{ s.tracking_number }}</span>
+          <span class="no-print" style="display:inline-flex;gap:6px">
+            <button class="icon-action" onclick="copyText('{{ s.tracking_number }}', this)" aria-label="Copy tracking number" title="Copy"><i data-lucide="copy"></i></button>
+            <button class="icon-action" onclick="shareTracking('{{ s.tracking_number }}')" aria-label="Share tracking link" title="Share link"><i data-lucide="share-2"></i></button>
+            <button class="icon-action" onclick="window.print()" aria-label="Print" title="Print"><i data-lucide="printer"></i></button>
+          </span>
+        </div>
+      </div>
+      <form class="th-search no-print" onsubmit="return goTrack(event, this)" role="search">
+        <label class="sr-only" for="th-tn">Track another shipment</label>
+        <input id="th-tn" name="tn" placeholder="Track another number" autocomplete="off" spellcheck="false">
+        <button type="submit"><i data-lucide="search"></i> Track</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<div class="container track-body">
+  {% if is_demo %}
+  <div class="demo-note no-print" role="note">
+    <i data-lucide="flask-conical"></i>
+    <span><strong>Demo shipment.</strong> It was created automatically to show how tracking works.
+      {% if current_customer and current_customer.email == 'demo@example.com' %}<a href="/dashboard#guide">See the step-by-step guide</a>{% else %}Log in as <span class="mono">demo@example.com</span> / <span class="mono">demo1234</span> to see the <a href="/login">step-by-step setup guide</a>{% endif %}.</span>
+  </div>
+  {% endif %}
+  <div class="track-layout">
+    <!-- ======================================== main column -->
+    <div class="track-main">
+      <section class="status-panel" id="status-panel" aria-live="polite">
+        <div class="sp-head">
+          <div>
+            <div class="sp-stage"><span id="sp-badge"></span><span class="live-tag no-print" title="Live tracking — this page refreshes automatically every 30 seconds"><span class="dot"></span> Live tracking</span><span class="sp-updated" id="sp-updated"></span></div>
+            <h1 class="sp-headline" id="sp-headline">—</h1>
+            <p class="sp-detail" id="sp-detail"></p>
+          </div>
+          <div class="sp-eta" id="sp-eta"></div>
+        </div>
+        <div class="sp-bar-wrap" id="sp-bar"></div>
+        <div class="progress-steps" id="progress-steps" aria-label="Delivery progress"></div>
+      </section>
+
+      <div class="issue-card" id="issue-card" hidden role="note"></div>
+
+      <section class="card map-card">
+        <div class="panel-head"><h2><i data-lucide="map"></i> Live route map</h2><span class="live-tag no-print" title="This page refreshes automatically"><span class="dot"></span> Live</span></div>
+        <div id="map" class="map" role="region" aria-label="Shipment route map"></div>
+        <div class="map-legend">
+          <span><i></i> Travelled</span>
+          <span><i class="rem"></i> Remaining (scheduled)</span>
+          <span><i class="cp"></i> Checkpoint</span>
+          <span>🏁 Destination</span>
+        </div>
+        <div class="notice" role="note">
+          <i data-lucide="info"></i>
+          <div>The moving marker shows the <strong>scheduled position</strong> along the route planned by our courier team — it is <strong>not a live GPS fix</strong>. The travel history below is the source of truth for where your parcel has been scanned.</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="panel-head"><h2><i data-lucide="history"></i> Travel history</h2><span class="small muted" id="hist-count"></span></div>
+        <div id="history"></div>
+      </section>
+
+      <div class="acc">
+        <details>
+          <summary><i data-lucide="file-text"></i> Shipment details <span class="acc-sub">Carrier, mode, payment, pickup</span><i data-lucide="chevron-down" class="acc-chev"></i></summary>
+          <div class="acc-body">
+            <div class="info-grid">
+              {% for label, value in [
+                ('Origin', s.origin), ('Destination', s.destination), ('Carrier', s.carrier), ('Carrier reference', s.carrier_reference),
+                ('Shipment mode', s.shipment_mode), ('Service type', s.service_type), ('Package type', s.package_type), ('Product', s.product),
+                ('Quantity', s.qty), ('Piece type', s.piece_type), ('Weight', s.weight), ('Payment mode', s.payment_mode),
+                ('Total freight', s.total_freight), ('Departure time', s.departure_time), ('Pickup date', s.pickup_date), ('Pickup time', s.pickup_time),
+              ] %}
+              <div><div class="k">{{ label }}</div><div class="v">{{ dash(value) }}</div></div>
+              {% endfor %}
+            </div>
+            <div class="comments-box"><strong>Comments:</strong> {{ s.comments or '—' }}</div>
+          </div>
+        </details>
+        <details>
+          <summary><i data-lucide="users"></i> Shipper &amp; receiver <span class="acc-sub">{{ s.sender_name }} → {{ s.receiver_name }}</span><i data-lucide="chevron-down" class="acc-chev"></i></summary>
+          <div class="acc-body">
+            <div class="party-grid">
+              <div class="party-card">
+                <div class="pg-k"><i data-lucide="send"></i> Shipper</div>
+                <div class="party-name">{{ s.sender_name }}</div>
+                {% if s.sender_address %}<div class="party-line"><i data-lucide="map-pin"></i><span>{{ s.sender_address }}</span></div>{% endif %}
+                {% if s.origin %}<div class="party-line"><i data-lucide="building"></i><span>{{ s.origin }}</span></div>{% endif %}
+              </div>
+              <div class="party-card">
+                <div class="pg-k"><i data-lucide="inbox"></i> Receiver</div>
+                <div class="party-name">{{ s.receiver_name }}</div>
+                {% if s.receiver_address %}<div class="party-line"><i data-lucide="map-pin"></i><span>{{ s.receiver_address }}</span></div>{% endif %}
+                {% if s.destination %}<div class="party-line"><i data-lucide="building"></i><span>{{ s.destination }}</span></div>{% endif %}
+              </div>
+            </div>
+          </div>
+        </details>
+        <details>
+          <summary><i data-lucide="boxes"></i> Packages <span class="acc-sub">{{ s.qty or '—' }} × {{ s.piece_type or 'piece' }} · {{ s.weight or '—' }}</span><i data-lucide="chevron-down" class="acc-chev"></i></summary>
+          <div class="acc-body">
+            <div class="table-wrap">
+              <table class="dtable">
+                <thead><tr><th>Qty</th><th>Piece type</th><th>Description</th><th>Length (cm)</th><th>Width (cm)</th><th>Height (cm)</th><th>Weight</th></tr></thead>
+                <tbody>
+                  <tr><td>{{ dash(s.qty) }}</td><td>{{ dash(s.piece_type) }}</td><td>{{ s.product or s.package_type or '—' }}</td><td>{{ dash(s.length_cm) }}</td><td>{{ dash(s.width_cm) }}</td><td>{{ dash(s.height_cm) }}</td><td>{{ dash(s.weight) }}</td></tr>
+                </tbody>
+                <tfoot>
+                  <tr><td colspan="7">Total pieces: {{ s.qty or '—' }} &nbsp;·&nbsp; Total weight: {{ s.weight or '—' }}{% if s.length_cm and s.width_cm and s.height_cm %}{% set vol = (s.length_cm|float * s.width_cm|float * s.height_cm|float / 1000000) %}{% if vol > 0 %} &nbsp;·&nbsp; Volume: {{ '%.3f'|format(vol) }} m³{% endif %}{% endif %}</td></tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </details>
+        <details>
+          <summary><i data-lucide="table-2"></i> Full scan log <span class="acc-sub">Date, location, status, updated by</span><i data-lucide="chevron-down" class="acc-chev"></i></summary>
+          <div class="acc-body">
+            <div class="table-wrap">
+              <table class="dtable">
+                <thead><tr><th>Date</th><th>Time</th><th>Location</th><th>Status</th><th>Updated by</th><th>Remarks</th></tr></thead>
+                <tbody id="scan-log"></tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- ======================================== sidebar -->
+    <aside class="track-aside">
+      <div class="card">
+        <div class="card-title"><i data-lucide="clipboard-list"></i> Shipment facts</div>
+        <div class="route-mini">
+          <span class="rm-dot"></span><span><small>From</small>{{ dash(s.origin) }}</span>
+          <span class="rm-line"></span><span></span>
+          <span class="rm-dot end"></span><span><small>To</small>{{ dash(s.destination) }}</span>
+        </div>
+        <dl class="facts">
+          <div><dt>Service</dt><dd>{{ dash(s.service_type) }}</dd></div>
+          <div><dt>Package</dt><dd>{{ dash(s.package_type) }}</dd></div>
+          <div><dt>Weight</dt><dd>{{ dash(s.weight) }}</dd></div>
+          <div><dt>Pieces</dt><dd>{{ dash(s.qty) }}</dd></div>
+          <div><dt>Mode</dt><dd>{{ dash(s.shipment_mode) }}</dd></div>
+          <div><dt>Shipped</dt><dd>{{ s.created_at.strftime('%b %d, %Y') if s.created_at else '—' }}</dd></div>
+        </dl>
+      </div>
+
+      <div class="card no-print">
+        <div class="card-title"><i data-lucide="bell-ring"></i> Get updates</div>
+        <p class="small muted" style="margin-top:-6px">Save this shipment to your account to follow it and get email alerts.</p>
+        <div class="aside-actions">
+          {% if current_customer %}
+            <button class="btn btn-primary btn-block" id="attach-btn" onclick="attachShipment()"><i data-lucide="bookmark-plus"></i> Save to my account</button>
+          {% else %}
+            <a class="btn btn-primary btn-block" href="/login"><i data-lucide="log-in"></i> Sign in to save</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card no-print">
+        <div class="card-title"><i data-lucide="headset"></i> Need help?</div>
+        <div class="aside-actions">
+          {% if business.phone %}<a class="btn btn-ghost btn-block" href="tel:{{ business.phone_tel }}"><i data-lucide="phone"></i> Call {{ business.phone }}</a>
+          <a class="btn btn-ghost btn-block" href="sms:{{ business.phone_tel }}?body={{ ('Hello, I have a question about shipment ' ~ s.tracking_number)|urlencode }}"><i data-lucide="message-square-text"></i> Text us</a>{% endif %}
+          {% if business.whatsapp %}<a class="btn btn-ghost btn-block" href="https://wa.me/{{ whatsapp_digits }}?text={{ ('Hello, I have a question about shipment ' ~ s.tracking_number)|urlencode }}" target="_blank" rel="noopener"><i data-lucide="message-circle"></i> WhatsApp us</a>{% endif %}
+          {% if business.email %}<a class="btn btn-ghost btn-block" href="mailto:{{ business.email }}?subject={{ ('Shipment ' ~ s.tracking_number)|urlencode }}"><i data-lucide="mail"></i> Email support</a>{% endif %}
+        </div>
+      </div>
+
+      <div class="card barcode-card">
+        <div class="card-title"><i data-lucide="scan-barcode"></i> Barcode</div>
+        <svg id="barcode" role="img" aria-label="Barcode for {{ s.tracking_number }}"></svg>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if shipment %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script src="/static/js/map.js?v={{ asset_version }}"></script>
+<script>
+(function () {
+  const TN = {{ shipment.tracking_number|tojson }};
+  let events = {{ events_json|safe }};
+  let current = {{ current_json|safe }};
+  let routePath = {{ route_path_json|safe }};
+  let journey = {{ journey_json|safe }};
+  let serverNow = {{ server_now|tojson }};
+  let eta = {{ (shipment.estimated_delivery or '')|tojson }};
+  const DEST = {{ (shipment.destination or '')|tojson }};
+  const BIZ = {{ {'phone': business.phone, 'tel': business.phone_tel, 'wa': whatsapp_digits, 'email': business.email}|tojson }};
+  let serverOffset = Date.parse(serverNow) - Date.now();
+  let tmap = null;
+  const HIST_LIMIT = 6;
+  let histExpanded = false;
+
+  const dayName = (d) => d.toLocaleDateString(undefined, { weekday: "long" });
+  const shortDate = (d) => d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  const hhmm = (d) => d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+
+  function headline(status) {
+    const cls = statusClass(status);
+    const s = String(status || "").toLowerCase();
+    if (cls === "delivered") return "Delivered" + (DEST ? " in " + DEST : "");
+    if (cls === "outfor") return "Out for delivery" + (DEST ? " in " + DEST : "");
+    if (s.includes("custom")) return "Held at customs — awaiting clearance";
+    if (s.includes("exception")) return "Delivery exception — we're on it";
+    if (cls === "delayed") return "Temporarily on hold";
+    if (cls === "transit") return "On its way" + (DEST ? " to " + DEST : "");
+    return "Label created — waiting for pickup";
+  }
+
+  function renderStatus() {
+    const status = current.status;
+    const cls = statusClass(status);
+    const last = events[events.length - 1];
+    document.getElementById("status-panel").className = "status-panel " + cls;
+    document.getElementById("sp-badge").innerHTML = statusBadge(status, true).replace('class="badge', 'class="badge lg');
+    document.getElementById("sp-updated").textContent = last ? "Updated " + timeAgo(last.timestamp) : "";
+    document.getElementById("sp-headline").textContent = headline(status);
+    document.getElementById("sp-detail").innerHTML = last
+      ? "<span>Latest: <strong>" + esc(last.status) + "</strong>" + (last.location_name ? " · " + esc(last.location_name) : "") + " · " + esc(fmtDate(last.timestamp)) + "</span>" +
+        (last.notes ? '<span class="sp-note">“' + esc(last.notes) + "”</span>" : "")
+      : "No checkpoints yet.";
+    renderEta();
+    renderIssue(status);
+    renderProgressSteps(document.getElementById("progress-steps"), status);
+  }
+
+  /** Delivery-day-first ETA: weekday big, date + time below, countdown chip while moving. */
+  function renderEta() {
+    const el = document.getElementById("sp-eta");
+    const bar = document.getElementById("sp-bar");
+    const cls = statusClass(current.status);
+    const nowMs = Date.now() + serverOffset;
+    let label = "Estimated delivery", icon = "calendar-clock", day = "", sub = "", chip = "";
+    if (cls === "delivered") {
+      const last = events[events.length - 1];
+      const d = last ? new Date(last.timestamp) : null;
+      label = "Delivered"; icon = "package-check";
+      day = d ? dayName(d) : "Delivered";
+      sub = d ? shortDate(d) + " at " + hhmm(d) : "";
+    } else if (journey.state === "paused") {
+      label = "Estimated delivery"; icon = "pause-circle";
+      day = "Pending";
+      sub = "A new estimate will appear when the shipment moves again";
+    } else if (journey.state === "moving" && journey.end) {
+      const d = new Date(journey.end);
+      const left = timeLeft(journey.end, nowMs);
+      label = "Scheduled delivery"; icon = "calendar-clock";
+      day = dayName(d);
+      sub = shortDate(d) + " · by " + hhmm(d);
+      chip = left ? '<div class="sp-eta-count"><i data-lucide="timer"></i> in ' + esc(left) + "</div>" : '<div class="sp-eta-count">Arriving any moment</div>';
+    } else if (eta) {
+      const d = new Date(eta);
+      if (!isNaN(d) && /\d{4}/.test(eta)) { day = dayName(d); sub = eta; } else { day = eta; }
+    } else {
+      day = "Pending";
+      sub = "Shown once the shipment is picked up";
+    }
+    el.innerHTML = '<div class="sp-eta-label"><i data-lucide="' + icon + '"></i> ' + esc(label) + "</div>" +
+      '<div class="sp-eta-day">' + esc(day) + "</div>" + (sub ? '<div class="sp-eta-sub">' + esc(sub) + "</div>" : "") + chip;
+
+    const active = tmap && routePath && journey.state && journey.state !== "not_started" && cls !== "delivered";
+    if (active) {
+      const pct = Math.round(tmap.getFraction() * 100);
+      bar.innerHTML = '<div class="sp-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="Scheduled route progress"><span style="width:' + pct + '%"></span></div>' +
+        '<div class="sp-bar-label"><span>' + pct + "% of scheduled route covered</span><span>" + esc(DEST || "") + "</span></div>";
+    } else bar.innerHTML = "";
+    refreshIcons();
+  }
+
+  function renderIssue(status) {
+    const box = document.getElementById("issue-card");
+    if (statusClass(status) !== "delayed") { box.hidden = true; return; }
+    const s = String(status).toLowerCase();
+    const what = s.includes("custom")
+      ? "Your parcel is being reviewed by the customs authority in the destination country. This is a normal step for international shipments and usually clears without any action from you."
+      : s.includes("exception")
+        ? "Something interrupted the normal delivery flow — for example an address question or a missed connection. Our team is working on it."
+        : "Movement has been paused by our operations team. The delivery estimate will update automatically as soon as it moves again.";
+    const contact = [];
+    if (BIZ.tel) {
+      contact.push('<a class="btn btn-ghost btn-sm" href="tel:' + esc(BIZ.tel) + '"><i data-lucide="phone"></i> Call us</a>');
+      contact.push('<a class="btn btn-ghost btn-sm" href="sms:' + esc(BIZ.tel) + '"><i data-lucide="message-square-text"></i> Text us</a>');
+    }
+    if (BIZ.wa) contact.push('<a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://wa.me/' + esc(BIZ.wa) + '"><i data-lucide="message-circle"></i> WhatsApp</a>');
+    if (BIZ.email) contact.push('<a class="btn btn-ghost btn-sm" href="mailto:' + esc(BIZ.email) + "?subject=" + encodeURIComponent("Shipment " + TN) + '"><i data-lucide="mail"></i> Email</a>');
+    box.innerHTML = '<div class="ic-icon"><i data-lucide="alert-triangle"></i></div><div>' +
+      "<h3>What this means</h3><p>" + esc(what) + "</p>" +
+      '<p class="ic-safe"><i data-lucide="shield-check"></i> We will never ask you to pay by text message or via a link to release a parcel. If you receive such a message, don\'t pay — contact us directly.</p>' +
+      (contact.length ? '<div class="ic-actions">' + contact.join("") + "</div>" : "") + "</div>";
+    box.hidden = false;
+    refreshIcons();
+  }
+
+  /** Travel history grouped by day, newest first. */
+  function renderHistory() {
+    const box = document.getElementById("history");
+    const list = events.slice().reverse();
+    document.getElementById("hist-count").textContent = list.length ? list.length + " scan" + (list.length === 1 ? "" : "s") : "";
+    if (!list.length) { box.innerHTML = '<p class="muted small">No checkpoints yet.</p>'; return; }
+    const groups = [];
+    list.forEach((ev, i) => {
+      const d = new Date(ev.timestamp);
+      const key = isNaN(d) ? "Unknown date" : d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+      let g = groups[groups.length - 1];
+      if (!g || g.key !== key) { g = { key, rows: [] }; groups.push(g); }
+      g.rows.push({ ev, i, d });
+    });
+    const limited = !histExpanded && list.length > HIST_LIMIT + 1;
+    box.innerHTML = groups.map((g) => {
+      const allHidden = limited && g.rows.every((r) => r.i >= HIST_LIMIT);
+      return '<div class="day-group' + (allHidden ? " h-hidden" : "") + '"><div class="day-label">' + esc(g.key) + "</div>" +
+        g.rows.map(({ ev, i, d }) =>
+          '<div class="hist-row' + (i === 0 ? " latest" : "") + (limited && i >= HIST_LIMIT ? " h-hidden" : "") + '">' +
+          '<div class="h-time">' + esc(isNaN(d) ? "" : hhmm(d)) + '</div><div class="h-rail"><span class="h-dot"></span></div>' +
+          '<div><div class="h-status">' + esc(ev.status) + "</div>" +
+          (ev.location_name ? '<div class="h-loc">' + esc(ev.location_name) + "</div>" : "") +
+          (ev.notes ? '<div class="h-notes">' + esc(ev.notes) + "</div>" : "") + "</div></div>"
+        ).join("") + "</div>";
+    }).join("") +
+      (list.length > HIST_LIMIT + 1 ? '<button type="button" class="tl-more" id="hist-toggle">' + (histExpanded ? "Show less" : "Show all " + list.length + " scans") + "</button>" : "");
+    const t = document.getElementById("hist-toggle");
+    if (t) t.addEventListener("click", () => { histExpanded = !histExpanded; renderHistory(); });
+  }
+
+  function renderScanLog() {
+    const body = document.getElementById("scan-log");
+    const rows = events.slice().reverse();
+    if (!rows.length) { body.innerHTML = '<tr><td colspan="6" class="muted">No checkpoints yet.</td></tr>'; return; }
+    body.innerHTML = rows.map((ev) => {
+      const d = ev.timestamp ? new Date(ev.timestamp) : null;
+      return "<tr><td class='nowrap'>" + esc(d ? shortDate(d) : "—") + "</td><td class='nowrap'>" + esc(d ? hhmm(d) : "—") + "</td><td>" + esc(ev.location_name || "—") +
+        "</td><td>" + statusBadge(ev.status) + "</td><td>" + esc(ev.updated_by || "—") + "</td><td>" + esc(ev.notes || "—") + "</td></tr>";
+    }).join("");
+  }
+
+  function renderAll() {
+    renderStatus();
+    renderHistory();
+    renderScanLog();
+  }
+
+  tmap = initTrackingMap("map", { events, current, route_path: routePath, journey, server_now: serverNow, label: TN });
+  renderAll();
+  rememberTracking(TN);
+  setInterval(() => { if (!document.hidden) renderEta(); }, 30000);
+
+  try {
+    JsBarcode("#barcode", TN, { format: "CODE128", width: 2, height: 56, displayValue: true, font: "monospace", fontSize: 14, margin: 0 });
+  } catch (e) { document.getElementById("barcode").outerHTML = '<div class="mono" style="font-size:1.2rem">' + esc(TN) + "</div>"; }
+
+  // printing: open every section and show the full history
+  window.addEventListener("beforeprint", () => {
+    document.querySelectorAll(".acc details").forEach((d) => { d.dataset.wasOpen = d.open ? "1" : "0"; d.open = true; });
+  });
+  window.addEventListener("afterprint", () => {
+    document.querySelectorAll(".acc details").forEach((d) => { d.open = d.dataset.wasOpen === "1"; });
+  });
+
+  // ---- poll every 30 s
+  async function poll() {
+    if (document.hidden) return;
+    try {
+      const data = await apiJSON("/api/track/" + encodeURIComponent(TN));
+      const hadNew = data.events.length > events.length;
+      const changed = data.shipment.current_status !== current.status || data.journey_state !== journey.state;
+      events = data.events;
+      current = { lat: data.shipment.current_lat, lng: data.shipment.current_lng, status: data.shipment.current_status };
+      routePath = data.route_path;
+      journey = { start: data.journey_start, end: data.journey_end, state: data.journey_state, paused_frac: data.journey_paused_frac };
+      eta = data.shipment.estimated_delivery || "";
+      serverOffset = Date.parse(data.server_now) - Date.now();
+      if (tmap) tmap.update({ events, current, route_path: routePath, journey, server_now: data.server_now, label: TN });
+      renderAll();
+      if (hadNew) toast("Shipment updated", "success");
+      else if (changed) toast("Status changed: " + current.status, "success");
+    } catch (e) { /* keep last good state */ }
+  }
+  setInterval(poll, 30000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+
+  window.attachShipment = async function () {
+    const btn = document.getElementById("attach-btn");
+    if (btn) btn.disabled = true;
+    try {
+      const res = await apiJSON("/api/customer/shipments/link", { method: "POST", body: { tracking_number: TN } });
+      toast(res.source === "owned" ? "This shipment is already in your account" : "Saved — you're now following this shipment", "success");
+    } catch (e) {
+      if (e.status === 401) window.location.href = "/login";
+      else toast(e.message, "error");
+    } finally { if (btn) btn.disabled = false; }
+  };
+})();
+</script>
+{% endif %}
+{% endblock %}
