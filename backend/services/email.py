@@ -24,9 +24,9 @@ SMTP_FROM = _env("SMTP_FROM") or SMTP_USER
 # Gmail app passwords are displayed as "abcd efgh ijkl mnop"; spaces must go.
 SMTP_PASSWORD = (os.getenv("SMTP_PASSWORD") or "").replace(" ", "").strip()
 
-BRAND = "#1d4ed8"
-BRAND_DEEP = "#0b1f52"
-ACCENT = "#f97316"
+BRAND = "#0f766e"
+BRAND_DEEP = "#062925"
+ACCENT = "#b5ec3b"
 
 
 def e(value) -> str:
@@ -80,7 +80,7 @@ def _base_html(title: str, body: str) -> str:
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#0d1b2e">
   <tr><td style="background:{BRAND_DEEP};padding:24px 28px">
     <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:.2px">{name}</div>
-    <div style="font-size:12px;color:#aac0ff;margin-top:4px">24/7 Tracking · Worldwide &amp; Domestic Delivery</div>
+    <div style="font-size:12px;color:#a7cfc9;margin-top:4px">24/7 Tracking · Worldwide &amp; Domestic Delivery</div>
   </td></tr>
   <tr><td style="height:4px;background:{ACCENT}"></td></tr>
   <tr><td style="padding:28px;font-size:15px;line-height:1.6">
