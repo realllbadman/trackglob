@@ -35,6 +35,8 @@ WANTED_COLUMNS = {
     },
     "shipments": {
         "customer_id": "INTEGER",
+        "sender_email": "TEXT",
+        "sender_phone": "TEXT",
         "sender_address": "TEXT",
         "receiver_phone": "TEXT",
         "receiver_address": "TEXT",

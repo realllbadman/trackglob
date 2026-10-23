@@ -24,6 +24,8 @@ class ShipmentOut(BaseModel):
     id: int
     tracking_number: str
     sender_name: str
+    sender_email: Optional[str] = None
+    sender_phone: Optional[str] = None
     sender_address: Optional[str] = None
     receiver_name: str
     receiver_phone: Optional[str] = None
@@ -105,6 +107,8 @@ class NotifyIn(BaseModel):
 
 # ---------------------------------------------------------------- admin
 class _ShipmentFields(BaseModel):
+    sender_email: Optional[str] = None
+    sender_phone: Optional[str] = None
     sender_address: Optional[str] = None
     receiver_phone: Optional[str] = None
     receiver_address: Optional[str] = None

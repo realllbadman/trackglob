@@ -281,7 +281,10 @@
     // ------------------------------------------------------------ field definitions
     const F = (name, label, opts) => Object.assign({ name, label, type: "text" }, opts || {});
     const GROUPS = [
-      ["Sender", [F("sender_name", "Sender name", { required: true, span: 2 }), F("sender_address", "Sender address", { span: 2 })]],
+      ["Sender", [
+        F("sender_name", "Sender name", { required: true }), F("sender_email", "Sender email", { type: "email" }),
+        F("sender_phone", "Sender phone"), F("sender_address", "Sender address"),
+      ]],
       ["Receiver", [
         F("receiver_name", "Receiver name", { required: true }), F("receiver_email", "Receiver email", { type: "email", required: true }),
         F("receiver_phone", "Receiver phone"), F("receiver_address", "Receiver address"),
@@ -290,7 +293,7 @@
         F("origin", "Origin", { placeholder: "City, Country" }), F("destination", "Destination", { placeholder: "City, Country" }),
         F("package_type", "Package type", { type: "select", options: ["Document", "Parcel", "Freight"] }),
         F("service_type", "Service type", { type: "select", options: ["Standard", "Express"] }),
-        F("weight", "Weight", { placeholder: "e.g. 2.5 kg" }), F("estimated_delivery", "Estimated delivery", { placeholder: "e.g. Oct 24, 2026" }),
+        F("weight", "Weight", { placeholder: "e.g. 2.5 kg" }), F("estimated_delivery", "Estimated delivery", { type: "date" }),
         F("shipment_mode", "Shipment mode", { type: "select", options: ["Air Freight", "Ocean Freight", "Ground / Road", "Express"] }),
         F("product", "Product / description"),
       ]],
@@ -302,15 +305,36 @@
       ["Pieces & pickup", [
         F("qty", "Quantity"), F("piece_type", "Piece type", { type: "select", options: ["Others", "Box", "Pallet", "Envelope", "Crate"] }),
         F("length_cm", "Length (cm)"), F("width_cm", "Width (cm)"), F("height_cm", "Height (cm)"),
-        F("departure_time", "Departure time", { placeholder: "e.g. 09:30" }), F("pickup_date", "Pickup date", { type: "date" }), F("pickup_time", "Pickup time", { type: "time" }),
+        F("departure_time", "Departure time", { type: "time" }), F("pickup_date", "Pickup date", { type: "date" }), F("pickup_time", "Pickup time", { type: "time" }),
       ]],
       ["Notes", [F("comments", "Comments", { type: "textarea", span: 4 })]],
     ];
+
+    // A date input needs YYYY-MM-DD and a time input needs HH:MM. Stored values may be prettier
+    // ("Oct 27, 2026", "09:30 UTC"); convert when we can, otherwise fall back to a text box so the
+    // existing value stays visible and editable instead of silently blanking.
+    function toDateValue(v) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+      const d = new Date(v);
+      if (!isNaN(d) && /\d/.test(v)) {
+        const p = (n) => String(n).padStart(2, "0");
+        return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+      }
+      return null;
+    }
+    function toTimeValue(v) {
+      const m = String(v).match(/^(\d{1,2}):(\d{2})/);
+      return m ? m[1].padStart(2, "0") + ":" + m[2] : null;
+    }
 
     function fieldHtml(f, prefix, value) {
       const id = prefix + f.name;
       const v = value == null ? "" : value;
       const cls = f.span === 4 ? "span-4" : f.span === 2 ? "span-2" : "";
+      let type = f.type;
+      let val = v;
+      if (v && type === "date") { const d = toDateValue(v); if (d) val = d; else type = "text"; }
+      else if (v && type === "time") { const t = toTimeValue(v); if (t) val = t; else type = "text"; }
       let control;
       if (f.type === "select") {
         const opts = f.options.slice();
@@ -320,7 +344,7 @@
       } else if (f.type === "textarea") {
         control = '<textarea id="' + id + '" name="' + f.name + '" rows="3">' + esc(v) + "</textarea>";
       } else {
-        control = '<input id="' + id + '" name="' + f.name + '" type="' + f.type + '" value="' + esc(v) + '"' +
+        control = '<input id="' + id + '" name="' + f.name + '" type="' + type + '" value="' + esc(val) + '"' +
           (f.placeholder ? ' placeholder="' + esc(f.placeholder) + '"' : "") + (f.required ? " required" : "") + ">";
       }
       return '<div class="field ' + cls + '"><label for="' + id + '">' + esc(f.label) + (f.required ? ' <span style="color:var(--danger)">*</span>' : "") + "</label>" + control + "</div>";

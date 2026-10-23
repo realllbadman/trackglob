@@ -124,12 +124,15 @@
                 <div class="party-name">{{ s.sender_name }}</div>
                 {% if s.sender_address %}<div class="party-line"><i data-lucide="map-pin"></i><span>{{ s.sender_address }}</span></div>{% endif %}
                 {% if s.origin %}<div class="party-line"><i data-lucide="building"></i><span>{{ s.origin }}</span></div>{% endif %}
+                {% if s.sender_phone %}<div class="party-line"><i data-lucide="phone"></i><span>{{ s.sender_phone }}</span></div>{% endif %}
+                {% if s.sender_email %}<div class="party-line"><i data-lucide="mail"></i><span>{{ s.sender_email }}</span></div>{% endif %}
               </div>
               <div class="party-card">
                 <div class="pg-k"><i data-lucide="inbox"></i> Receiver</div>
                 <div class="party-name">{{ s.receiver_name }}</div>
                 {% if s.receiver_address %}<div class="party-line"><i data-lucide="map-pin"></i><span>{{ s.receiver_address }}</span></div>{% endif %}
                 {% if s.destination %}<div class="party-line"><i data-lucide="building"></i><span>{{ s.destination }}</span></div>{% endif %}
+                {% if s.receiver_phone %}<div class="party-line"><i data-lucide="phone"></i><span>{{ s.receiver_phone }}</span></div>{% endif %}
               </div>
             </div>
           </div>

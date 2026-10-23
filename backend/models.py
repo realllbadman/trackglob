@@ -69,6 +69,8 @@ class Shipment(Base):
 
     # Parties
     sender_name = Column(String(160), nullable=False)
+    sender_email = Column(String(255), nullable=True)
+    sender_phone = Column(String(40), nullable=True)
     sender_address = Column(Text, nullable=True)
     receiver_name = Column(String(160), nullable=False)
     receiver_email = Column(String(255), nullable=False, index=True)

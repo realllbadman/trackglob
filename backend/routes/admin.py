@@ -1,4 +1,5 @@
 import json
+import re
 import secrets
 from datetime import datetime, timezone
 
@@ -72,6 +73,16 @@ def _clean(value):
     return value
 
 
+def _pretty_date(value):
+    """A date picker sends YYYY-MM-DD; store it as 'Oct 27, 2026' so it reads nicely everywhere."""
+    if isinstance(value, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", value.strip()):
+        try:
+            return datetime.strptime(value.strip(), "%Y-%m-%d").strftime("%b %d, %Y")
+        except ValueError:
+            return value
+    return value
+
+
 # ---------------------------------------------------------------- stats
 @router.get("/stats")
 def stats(db: Session = Depends(get_db)):
@@ -95,6 +106,7 @@ def create_shipment(payload: ShipmentCreate, background: BackgroundTasks, db: Se
     customer_email = (data.pop("customer_email") or "").lower() or None
     notify = 1 if data.pop("notify_email") else 0
     data["receiver_email"] = data["receiver_email"].lower()
+    data["estimated_delivery"] = _pretty_date(data.get("estimated_delivery"))
 
     customer_id = None
     if customer_email:
@@ -172,6 +184,8 @@ def update_shipment(shipment_id: int, payload: ShipmentUpdate, db: Session = Dep
         data["notify_email"] = 1 if data["notify_email"] else 0
     if "current_status" in data and data["current_status"] not in STATUS_VALUES:
         raise HTTPException(status_code=400, detail="Invalid status")
+    if "estimated_delivery" in data:
+        data["estimated_delivery"] = _pretty_date(data["estimated_delivery"])
     for required in ("sender_name", "receiver_name"):
         if required in data and not (data[required] or "").strip():
             raise HTTPException(status_code=400, detail=f"{required.replace('_', ' ').title()} is required")
