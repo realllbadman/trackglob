@@ -289,6 +289,15 @@
 
     // ------------------------------------------------------------ field definitions
     const F = (name, label, opts) => Object.assign({ name, label, type: "text" }, opts || {});
+    // Suggestions for Origin / Destination — all 50 US states; admin can still type anything else
+    // (a city, or an international place), which is what geocoding/the map use.
+    const US_STATES = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+      "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky",
+      "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri",
+      "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina",
+      "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+      "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
+      "Wisconsin", "Wyoming"].map((s) => s + ", USA");
     const GROUPS = [
       ["Sender", [
         F("sender_name", "Sender name", { required: true }), F("sender_email", "Sender email", { type: "email" }),
@@ -299,7 +308,8 @@
         F("receiver_phone", "Receiver phone"), F("receiver_address", "Receiver address"),
       ]],
       ["Route & package", [
-        F("origin", "Origin", { placeholder: "City, Country" }), F("destination", "Destination", { placeholder: "City, Country" }),
+        F("origin", "Origin", { type: "datalist", options: US_STATES, placeholder: "Pick a state, or type a city / country" }),
+        F("destination", "Destination", { type: "datalist", options: US_STATES, placeholder: "Pick a state, or type a city / country" }),
         F("package_type", "Package type", { type: "select", options: ["Document", "Parcel", "Freight"] }),
         F("service_type", "Service type", { type: "select", options: ["Standard", "Express"] }),
         F("weight", "Weight", { placeholder: "e.g. 2.5 kg" }), F("estimated_delivery", "Estimated delivery", { type: "date" }),
@@ -350,6 +360,12 @@
         if (v && opts.indexOf(v) === -1) opts.push(v);
         control = '<select id="' + id + '" name="' + f.name + '"><option value="">—</option>' +
           opts.map((o) => '<option' + (o === v ? " selected" : "") + ">" + esc(o) + "</option>").join("") + "</select>";
+      } else if (f.type === "datalist") {
+        // Suggestions dropdown that still allows any typed value. Stored as plain text.
+        const listId = id + "-list";
+        control = '<input id="' + id + '" name="' + f.name + '" type="text" value="' + esc(v) + '" list="' + listId + '" autocomplete="off"' +
+          (f.placeholder ? ' placeholder="' + esc(f.placeholder) + '"' : "") + (f.required ? " required" : "") + ">" +
+          '<datalist id="' + listId + '">' + f.options.map((o) => '<option value="' + esc(o) + '"></option>').join("") + "</datalist>";
       } else if (f.type === "textarea") {
         control = '<textarea id="' + id + '" name="' + f.name + '" rows="3">' + esc(v) + "</textarea>";
       } else {
