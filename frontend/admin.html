@@ -308,7 +308,7 @@
       ]],
       ["Carrier & billing", [
         F("carrier", "Carrier"), F("carrier_reference", "Carrier reference"),
-        F("payment_mode", "Payment mode", { type: "datalist", placeholder: "Pick one or type another", options: ["Prepaid", "Bank transfer", "Card", "Cash on delivery", "Zelle", "Chime", "Venmo", "Apple Pay", "Cash App"] }),
+        F("payment_mode", "Payment mode", { type: "select", options: ["Prepaid", "Bank transfer", "Card", "Cash on delivery", "Zelle", "Chime", "Venmo", "Apple Pay", "Cash App"] }),
         F("total_freight", "Total freight", { placeholder: "e.g. $45.00" }),
       ]],
       ["Pieces & pickup", [
@@ -350,12 +350,6 @@
         if (v && opts.indexOf(v) === -1) opts.push(v);
         control = '<select id="' + id + '" name="' + f.name + '"><option value="">—</option>' +
           opts.map((o) => '<option' + (o === v ? " selected" : "") + ">" + esc(o) + "</option>").join("") + "</select>";
-      } else if (f.type === "datalist") {
-        // Pick a suggestion or type your own (e.g. "Other"). Stored as plain text.
-        const listId = id + "-list";
-        control = '<input id="' + id + '" name="' + f.name + '" type="text" value="' + esc(v) + '" list="' + listId + '"' +
-          (f.placeholder ? ' placeholder="' + esc(f.placeholder) + '"' : "") + ">" +
-          '<datalist id="' + listId + '">' + f.options.map((o) => '<option value="' + esc(o) + '"></option>').join("") + "</datalist>";
       } else if (f.type === "textarea") {
         control = '<textarea id="' + id + '" name="' + f.name + '" rows="3">' + esc(v) + "</textarea>";
       } else {
