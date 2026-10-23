@@ -287,6 +287,23 @@
     document.addEventListener("click", (e) => openPickerFor(e.target));
     document.addEventListener("focusin", (e) => openPickerFor(e.target));
 
+    // Origin/Destination: a scrollable <select> of states + "Other" that reveals a manual text box.
+    document.addEventListener("change", (e) => {
+      const sel = e.target;
+      if (sel.tagName === "SELECT" && sel.dataset.statefor) {
+        const input = document.getElementById(sel.dataset.statefor);
+        if (!input) return;
+        if (sel.value === "__other__") {
+          input.style.display = "";
+          input.value = "";
+          input.focus();
+        } else {
+          input.value = sel.value; // "" for "—", or the chosen state (this is what gets submitted)
+          input.style.display = "none";
+        }
+      }
+    });
+
     // ------------------------------------------------------------ field definitions
     const F = (name, label, opts) => Object.assign({ name, label, type: "text" }, opts || {});
     // Suggestions for Origin / Destination — all 50 US states; admin can still type anything else
@@ -308,8 +325,8 @@
         F("receiver_phone", "Receiver phone"), F("receiver_address", "Receiver address"),
       ]],
       ["Route & package", [
-        F("origin", "Origin", { type: "datalist", options: US_STATES, placeholder: "Pick a state, or type a city / country" }),
-        F("destination", "Destination", { type: "datalist", options: US_STATES, placeholder: "Pick a state, or type a city / country" }),
+        F("origin", "Origin", { type: "stateselect", options: US_STATES }),
+        F("destination", "Destination", { type: "stateselect", options: US_STATES }),
         F("package_type", "Package type", { type: "select", options: ["Document", "Parcel", "Freight"] }),
         F("service_type", "Service type", { type: "select", options: ["Standard", "Express"] }),
         F("weight", "Weight", { placeholder: "e.g. 2.5 kg" }), F("estimated_delivery", "Estimated delivery", { type: "date" }),
@@ -360,12 +377,19 @@
         if (v && opts.indexOf(v) === -1) opts.push(v);
         control = '<select id="' + id + '" name="' + f.name + '"><option value="">—</option>' +
           opts.map((o) => '<option' + (o === v ? " selected" : "") + ">" + esc(o) + "</option>").join("") + "</select>";
-      } else if (f.type === "datalist") {
-        // Suggestions dropdown that still allows any typed value. Stored as plain text.
-        const listId = id + "-list";
-        control = '<input id="' + id + '" name="' + f.name + '" type="text" value="' + esc(v) + '" list="' + listId + '" autocomplete="off"' +
-          (f.placeholder ? ' placeholder="' + esc(f.placeholder) + '"' : "") + (f.required ? " required" : "") + ">" +
-          '<datalist id="' + listId + '">' + f.options.map((o) => '<option value="' + esc(o) + '"></option>').join("") + "</datalist>";
+      } else if (f.type === "stateselect") {
+        // Native scrollable dropdown (opens a wheel on phones) with the preset options plus an
+        // "Other" choice that reveals a text box, so any city/country can still be typed.
+        const selId = id + "-sel";
+        const isPreset = v && f.options.indexOf(v) !== -1;
+        control =
+          '<select id="' + selId + '" data-statefor="' + id + '" aria-label="' + esc(f.label) + '">' +
+            '<option value="">—</option>' +
+            f.options.map((o) => '<option' + (o === v ? " selected" : "") + ">" + esc(o) + "</option>").join("") +
+            '<option value="__other__"' + (v && !isPreset ? " selected" : "") + ">Other (type manually)</option>" +
+          "</select>" +
+          '<input id="' + id + '" name="' + f.name + '" type="text" value="' + esc(v) + '" placeholder="Type a city / country"' +
+            ' style="margin-top:8px;' + (v && !isPreset ? "" : "display:none") + '">';
       } else if (f.type === "textarea") {
         control = '<textarea id="' + id + '" name="' + f.name + '" rows="3">' + esc(v) + "</textarea>";
       } else {
