@@ -385,8 +385,9 @@
         control =
           '<select id="' + selId + '" data-statefor="' + id + '" aria-label="' + esc(f.label) + '">' +
             '<option value="">—</option>' +
+            '<option value="__other__"' + (v && !isPreset ? " selected" : "") + ">Other — enter a city / country</option>" +
+            '<option value="" disabled>──────────</option>' +
             f.options.map((o) => '<option' + (o === v ? " selected" : "") + ">" + esc(o) + "</option>").join("") +
-            '<option value="__other__"' + (v && !isPreset ? " selected" : "") + ">Other (type manually)</option>" +
           "</select>" +
           '<input id="' + id + '" name="' + f.name + '" type="text" value="' + esc(v) + '" placeholder="Type a city / country"' +
             ' style="margin-top:8px;' + (v && !isPreset ? "" : "display:none") + '">';
