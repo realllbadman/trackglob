@@ -278,6 +278,15 @@
     let miniMap = null;
     let current = null; // shipment open in modal
 
+    // Open the native date/time picker when the whole field is clicked, not only its icon.
+    function openPickerFor(el) {
+      if (el && el.tagName === "INPUT" && /^(date|time|datetime-local)$/.test(el.type) && typeof el.showPicker === "function") {
+        try { el.showPicker(); } catch (err) { /* needs a user gesture, or unsupported */ }
+      }
+    }
+    document.addEventListener("click", (e) => openPickerFor(e.target));
+    document.addEventListener("focusin", (e) => openPickerFor(e.target));
+
     // ------------------------------------------------------------ field definitions
     const F = (name, label, opts) => Object.assign({ name, label, type: "text" }, opts || {});
     const GROUPS = [
