@@ -16,7 +16,7 @@
   <div class="container">
     <div class="nf-emoji" aria-hidden="true">📭</div>
     <h1 style="font-size:clamp(1.7rem,3.6vw,2.4rem)">We couldn't find that tracking number</h1>
-    <p class="muted">No shipment matches <strong class="mono">{{ tn or '—' }}</strong>. Check the number in your confirmation email and try again — tracking numbers look like <span class="mono">{{ business.tracking_prefix }}0000000042</span>.</p>
+    <p class="muted">No shipment matches <strong class="mono">{{ tn or '—' }}</strong>. Check the number in your confirmation email and try again — tracking numbers look like <span class="mono">{{ business.tracking_example }}</span>.</p>
     <form class="track-box" onsubmit="return goTrack(event, this)">
       <span class="tb-icon"><i data-lucide="scan-barcode"></i></span>
       <input name="tn" value="{{ tn }}" placeholder="Enter tracking number" autocomplete="off" aria-label="Tracking number" autofocus>

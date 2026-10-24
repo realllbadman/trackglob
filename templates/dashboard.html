@@ -16,7 +16,7 @@
     <div class="card-title"><i data-lucide="bookmark-plus"></i> Follow a shipment</div>
     <form class="follow-form" id="follow-form">
       <label class="sr-only" for="follow-tn">Tracking number</label>
-      <input class="input" id="follow-tn" placeholder="Enter a tracking number, e.g. {{ business.tracking_prefix }}0000000042" autocomplete="off">
+      <input class="input" id="follow-tn" placeholder="Enter a tracking number, e.g. {{ business.tracking_example }}" autocomplete="off">
       <button class="btn btn-primary" type="submit"><i data-lucide="plus"></i> Follow</button>
     </form>
   </div>
@@ -54,7 +54,7 @@
           <li>
             <span class="gs-n">1</span>
             <div><strong>Create the shipment</strong>
-              <p>Admin → <em>Shipments</em> → <em>New shipment</em>. Fill in the sender, receiver (name + email) and origin/destination, then <em>Create</em>. You get a tracking number like <span class="mono">{{ business.tracking_prefix }}0000000042</span>, and the receiver is emailed automatically.</p></div>
+              <p>Admin → <em>Shipments</em> → <em>New shipment</em>. Fill in the sender, receiver (name + email) and origin/destination, then <em>Create</em>. You get a tracking number like <span class="mono">{{ business.tracking_example }}</span>, and the receiver is emailed automatically.</p></div>
           </li>
           <li>
             <span class="gs-n">2</span>

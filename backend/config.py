@@ -37,6 +37,11 @@ BUSINESS = {
     "tracking_prefix": (os.getenv("TRACKING_PREFIX") or "CX").strip().upper(),
     "founded": _env("FOUNDED_YEAR"),
 }
+
+from .utils import example_tracking_number  # noqa: E402  (after BUSINESS; reads the same env)
+
+# A sample tracking number in the configured format, e.g. "WPC000000000000-CARGO", for placeholders.
+BUSINESS["tracking_example"] = example_tracking_number()
 # phone number in dialable form for tel:/sms: links, e.g. "+12132180651"
 BUSINESS["phone_tel"] = ("+" if BUSINESS["phone"].startswith("+") else "") + re.sub(r"\D", "", BUSINESS["phone"])
 

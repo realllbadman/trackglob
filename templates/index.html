@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% set nav_active = 'track' %}
-{% set tn_placeholder = 'e.g. ' ~ business.tracking_prefix ~ '0000000042' %}
+{% set tn_placeholder = 'e.g. ' ~ business.tracking_example %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
@@ -32,7 +32,7 @@
     <div class="tp-help">
       <details>
         <summary><i data-lucide="help-circle"></i> Where do I find my tracking number?</summary>
-        <p>It's in the shipment confirmation email we sent to the receiver, and on the shipping receipt. It starts with <strong class="mono">{{ business.tracking_prefix }}</strong> followed by 10 digits.</p>
+        <p>It's in the shipment confirmation email we sent to the receiver, and on the shipping receipt. It looks like <strong class="mono">{{ business.tracking_example }}</strong>.</p>
       </details>
     </div>
   </div>
@@ -235,7 +235,7 @@
     <div class="faq reveal">
       <details>
         <summary>Where do I find my tracking number?<span class="faq-ic"><i data-lucide="plus"></i></span></summary>
-        <p>It's in the confirmation email sent to the receiver when the shipment was registered, and on the shipping receipt. Numbers start with <strong class="mono">{{ business.tracking_prefix }}</strong> followed by 10 digits.</p>
+        <p>It's in the confirmation email sent to the receiver when the shipment was registered, and on the shipping receipt. Numbers look like <strong class="mono">{{ business.tracking_example }}</strong>.</p>
       </details>
       <details>
         <summary>Why hasn't my tracking updated?<span class="faq-ic"><i data-lucide="plus"></i></span></summary>

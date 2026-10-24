@@ -255,7 +255,7 @@ if __name__ == "__main__":
     if not SMTP_USER or not SMTP_PASSWORD:
         sys.exit("SMTP_USER / SMTP_PASSWORD are not set in .env")
     sample = SimpleNamespace(
-        tracking_number=BUSINESS["tracking_prefix"] + "0000000042", receiver_name="Test Receiver",
+        tracking_number=BUSINESS.get("tracking_example", BUSINESS["tracking_prefix"] + "0000000042"), receiver_name="Test Receiver",
         receiver_email=sys.argv[1], sender_name=BUSINESS["name"], origin="London, UK", destination="Berlin, Germany",
         service_type="Standard", estimated_delivery="To be confirmed", notify_email=1,
     )

@@ -11,15 +11,29 @@ from sqlalchemy.orm import Session
 from .models import Shipment
 
 TRACKING_PREFIX = (os.getenv("TRACKING_PREFIX") or "CX").strip().upper()
+TRACKING_SUFFIX = (os.getenv("TRACKING_SUFFIX") or "").strip().upper()
+try:
+    TRACKING_DIGITS = max(4, min(20, int(os.getenv("TRACKING_DIGITS") or 10)))
+except ValueError:
+    TRACKING_DIGITS = 10
+
+
+def format_tracking_number(digits: str) -> str:
+    """PREFIX + digits + SUFFIX, e.g. WPC027063384444-CARGO."""
+    return f"{TRACKING_PREFIX}{digits}{TRACKING_SUFFIX}"
+
+
+def example_tracking_number() -> str:
+    return format_tracking_number("0" * TRACKING_DIGITS)
 
 
 def generate_tracking_number(db: Session) -> str:
-    """PREFIX + 10 random digits, unique in the shipments table."""
+    """PREFIX + N random digits + SUFFIX, unique in the shipments table."""
     for _ in range(50):
-        tn = TRACKING_PREFIX + "".join(str(secrets.randbelow(10)) for _ in range(10))
+        tn = format_tracking_number("".join(str(secrets.randbelow(10)) for _ in range(TRACKING_DIGITS)))
         if not db.query(Shipment.id).filter(Shipment.tracking_number == tn).first():
             return tn
-    return TRACKING_PREFIX + str(int(time.time() * 1000))[-10:]
+    return format_tracking_number(str(int(time.time() * 1000))[-TRACKING_DIGITS:].zfill(TRACKING_DIGITS))
 
 
 def as_utc(dt: Optional[datetime]) -> Optional[datetime]:
